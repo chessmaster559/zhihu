@@ -43,6 +43,12 @@ AdcPdmAudioCodec::AdcPdmAudioCodec(int input_sample_rate, int output_sample_rate
     input_sample_rate_ = input_sample_rate;
     output_sample_rate_ = output_sample_rate;
 
+    esp_codec_dev_cfg_t codec_dev_cfg = {};
+    // Temporary bring-up bypass: restore this block to re-enable ADC capture.
+    // Playback remains available; no microphone data is produced.
+    (void)adc_mic_channel;
+    ESP_LOGW(TAG, "ADC microphone temporarily disabled; voice input unavailable");
+#if 0
     audio_codec_adc_cfg_t cfg = {};
     cfg.handle = NULL;
     cfg.continuous_cfg.max_store_buf_size = 1024 * 2;
@@ -58,7 +64,7 @@ AdcPdmAudioCodec::AdcPdmAudioCodec(int input_sample_rate, int output_sample_rate
     cfg.continuous_cfg.cfg.single_unit.channel_id[0] = (uint8_t)adc_mic_channel;
     const audio_codec_data_if_t *adc_if = audio_codec_new_adc_data(&cfg);
 
-    esp_codec_dev_cfg_t codec_dev_cfg = {
+    codec_dev_cfg = {
         .dev_type = ESP_CODEC_DEV_TYPE_IN,
         .data_if = adc_if,
     };
@@ -67,6 +73,8 @@ AdcPdmAudioCodec::AdcPdmAudioCodec(int input_sample_rate, int output_sample_rate
         ESP_LOGE(TAG, "Failed to create codec device");
         return;
     }
+
+#endif
 
     i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
     chan_cfg.auto_clear = true; // Auto clear the legacy data in the DMA buffer
@@ -138,8 +146,10 @@ AdcPdmAudioCodec::~AdcPdmAudioCodec() {
 
     ESP_ERROR_CHECK(esp_codec_dev_close(output_dev_));
     esp_codec_dev_delete(output_dev_);
-    ESP_ERROR_CHECK(esp_codec_dev_close(input_dev_));
-    esp_codec_dev_delete(input_dev_);
+    if (input_dev_ != nullptr) {
+        ESP_ERROR_CHECK(esp_codec_dev_close(input_dev_));
+        esp_codec_dev_delete(input_dev_);
+    }
 }
 
 void AdcPdmAudioCodec::SetOutputVolume(int volume) {
@@ -148,6 +158,9 @@ void AdcPdmAudioCodec::SetOutputVolume(int volume) {
 }
 
 void AdcPdmAudioCodec::EnableInput(bool enable) {
+    if (input_dev_ == nullptr) {
+        return;
+    }
     if (enable == input_enabled_) {
         return;
     }
@@ -211,6 +224,10 @@ void AdcPdmAudioCodec::EnableOutput(bool enable) {
 }
 
 int AdcPdmAudioCodec::Read(int16_t* dest, int samples) {
+    if (input_dev_ == nullptr || !input_enabled_) {
+        // AudioInputTask backs off when Read returns no samples.
+        return 0;
+    }
     if (input_enabled_) {
         ESP_ERROR_CHECK_WITHOUT_ABORT(esp_codec_dev_read(input_dev_, (void*)dest, samples * sizeof(int16_t)));
     }
