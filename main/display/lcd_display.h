@@ -3,6 +3,9 @@
 
 #include "gif/lvgl_gif.h"
 #include "lvgl_display.h"
+#if CONFIG_USE_KANSHAN_PET
+#include "pet/pet_animation.h"
+#endif
 
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_ops.h>
@@ -27,6 +30,13 @@ protected:
     lv_obj_t* emoji_label_ = nullptr;
     lv_obj_t* emoji_image_ = nullptr;
     std::unique_ptr<LvglGif> gif_controller_ = nullptr;
+    lv_obj_t* eaf_image_ = nullptr;
+    void ResetEaf();  // Called with the display lock; releases decoder and timer.
+#if CONFIG_USE_KANSHAN_PET
+    PetPresentation pet_presentation_{PetAction::Setup, "", 0};
+    bool pet_presentation_valid_ = false;
+    std::function<void(uint32_t, PetAnimationEvent)> pet_animation_callback_;
+#endif
     lv_obj_t* emoji_box_ = nullptr;
     lv_obj_t* chat_message_label_ = nullptr;
     esp_timer_handle_t preview_timer_ = nullptr;
@@ -45,6 +55,10 @@ protected:
 public:
     ~LcdDisplay();
     virtual void SetEmotion(const char* emotion) override;
+    bool SupportsPetAnimations() const override;
+    void SetPetPresentation(const PetPresentation& presentation) override;
+    void SetPetAnimationCallback(
+        std::function<void(uint32_t, PetAnimationEvent)> callback) override;
     virtual void SetChatMessage(const char* role, const char* content) override;
     virtual void ClearChatMessages() override;
     virtual void SetPreviewImage(std::unique_ptr<LvglImage> image) override;

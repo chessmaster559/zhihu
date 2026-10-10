@@ -1,6 +1,7 @@
 #include "audio_service.h"
 #include <esp_log.h>
 #include <cstring>
+#include "audio_output_lifecycle.h"
 
 #define RATE_CVT_CFG(_src_rate, _dest_rate, _channel)                                        \
     (esp_ae_rate_cvt_cfg_t) {                                                                \
@@ -148,7 +149,7 @@ void AudioService::Start() {
             audio_service->AudioInputTask();
             vTaskDelete(NULL);
         },
-        "audio_input", 2048 * 2, this, 8, &audio_input_task_handle_);
+        "audio_input", codec_->input_task_stack_bytes(), this, 8, &audio_input_task_handle_);
 
     /* Start the audio output task */
     xTaskCreate(
@@ -324,12 +325,25 @@ void AudioService::AudioInputTask() {
 }
 
 void AudioService::AudioOutputTask() {
+    AudioOutputLifecycle lifecycle;
     while (true) {
         std::unique_lock<std::mutex> lock(audio_queue_mutex_);
-        audio_queue_cv_.wait(
-            lock, [this]() { return !audio_playback_queue_.empty() || service_stopped_.load(); });
+        audio_queue_cv_.wait_for(
+            lock, std::chrono::milliseconds(codec_->output_idle_timeout_ms()),
+            [this]() { return !audio_playback_queue_.empty() || service_stopped_.load(); });
         if (service_stopped_.load()) {
             break;
+        }
+        if (audio_playback_queue_.empty()) {
+            // PA-IDLE: only this task can close TX, after decode/write/DMA drain.
+            const bool quiet = lifecycle.CanDisable(
+                esp_timer_get_time(), codec_->output_idle_timeout_ms(), IsPlaybackDrainedLocked(),
+                codec_->duplex() && codec_->input_enabled());
+            lock.unlock();
+            if (quiet && codec_->output_enabled()) {
+                codec_->EnableOutput(false);
+            }
+            continue;
         }
 
         auto task = std::move(audio_playback_queue_.front());
@@ -348,7 +362,9 @@ void AudioService::AudioOutputTask() {
             callbacks_.on_playback_progress(task.playback_id, task.media_position_ms);
         }
 
+        lifecycle.BeginWrite();
         codec_->OutputData(task.pcm);
+        lifecycle.CompleteWrite(esp_timer_get_time());
 
         /* Update the last output time */
         last_output_time_ = std::chrono::steady_clock::now();
@@ -375,6 +391,9 @@ void AudioService::AudioOutputTask() {
         }
     }
 
+    if (codec_->output_enabled() && !(codec_->duplex() && codec_->input_enabled())) {
+        codec_->EnableOutput(false);
+    }
     ESP_LOGW(TAG, "Audio output task stopped");
 }
 
@@ -762,12 +781,6 @@ void AudioService::EnableDeviceAec(bool enable) {
 void AudioService::SetCallbacks(AudioServiceCallbacks& callbacks) { callbacks_ = callbacks; }
 
 void AudioService::PlaySound(const std::string_view& ogg) {
-    if (!codec_->output_enabled()) {
-        esp_timer_stop(audio_power_timer_);
-        esp_timer_start_periodic(audio_power_timer_, AUDIO_POWER_CHECK_INTERVAL_MS * 1000);
-        codec_->EnableOutput(true);
-    }
-
     const auto* buf = reinterpret_cast<const uint8_t*>(ogg.data());
     size_t size = ogg.size();
 
@@ -834,19 +847,12 @@ void AudioService::CheckAndUpdateAudioPowerState() {
     auto now = std::chrono::steady_clock::now();
     auto input_elapsed =
         std::chrono::duration_cast<std::chrono::milliseconds>(now - last_input_time_).count();
-    auto output_elapsed =
-        std::chrono::duration_cast<std::chrono::milliseconds>(now - last_output_time_).count();
     if (input_elapsed > AUDIO_POWER_TIMEOUT_MS && codec_->input_enabled()) {
         // ADC continuous start/stop must run in the same task. Wake the audio
         // input task instead of closing the codec from the esp_timer task.
         xEventGroupSetBits(event_group_, AS_EVENT_AUDIO_INPUT_STOP_REQUEST);
     }
-    if (output_elapsed > AUDIO_POWER_TIMEOUT_MS && codec_->output_enabled()) {
-        // Keep TX clock when duplex RX is active; otherwise RX may stall on some boards.
-        if (!(codec_->duplex() && codec_->input_enabled())) {
-            codec_->EnableOutput(false);
-        }
-    }
+    // TX shutdown belongs to AudioOutputTask, never the timer racing a write.
     if (!codec_->input_enabled() && !codec_->output_enabled()) {
         esp_timer_stop(audio_power_timer_);
     }

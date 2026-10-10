@@ -1,0 +1,118 @@
+{
+  "motions": {
+    "pet_idle": {
+      "source": "C:\\Users\\T2071\\Downloads\\看山三视图\\刘看山动态\\待机_5秒_320x320_20fps_透明.gif",
+      "source_sha256": "e18748d708aba1d82917f41462bbbf2f120615b60d6e15b3c5d448a444d2ae12",
+      "source_frames": 100,
+      "output_frames": 98,
+      "size": [
+        128,
+        128
+      ],
+      "duration_ms": 5000,
+      "frame_delays_ms": [
+        50,
+        150
+      ],
+      "bytes": 349249,
+      "sha256": "c12f2f91f11cf02858a85b66733c5919b65fc10faf3eb4afd5d47b8a26002f35"
+    },
+    "pet_greeting": {
+      "source": "C:\\Users\\T2071\\Downloads\\看山三视图\\刘看山动态\\打招呼_4秒_320x320_20fps_透明.gif",
+      "source_sha256": "7cc8d9525a78503b0e746b0d3a9950fd94ab8c89439b3329bf729fc2a2470964",
+      "source_frames": 80,
+      "output_frames": 79,
+      "size": [
+        128,
+        128
+      ],
+      "duration_ms": 4000,
+      "frame_delays_ms": [
+        50,
+        100
+      ],
+      "bytes": 286825,
+      "sha256": "1f3d145a7e7563cc2967f946a573ac777bd63beceb26660258045f411c4cfe7d"
+    },
+    "pet_sway": {
+      "source": "C:\\Users\\T2071\\Downloads\\看山三视图\\刘看山动态\\晃悠_320x320_3秒_20fps_透明.gif",
+      "source_sha256": "c1a3bfc35af4b9faa1807ec75d6a4a4662ee7e8a3fd89cdcc2ebe863f107ce9e",
+      "source_frames": 60,
+      "output_frames": 60,
+      "size": [
+        128,
+        128
+      ],
+      "duration_ms": 3000,
+      "frame_delays_ms": [
+        50
+      ],
+      "bytes": 212810,
+      "sha256": "2eb41256a24126ab5840e6bf9f5393af1cac45e02cec732b93f8a726b27ac88d"
+    },
+    "pet_thinking": {
+      "source": "C:\\Users\\T2071\\Downloads\\看山三视图\\刘看山动态\\电脑_6秒_320x320_20fps_透明.gif",
+      "source_sha256": "bf1a7bc0d28dc954d449e5d84ec0345f01ee0c57b56346aafc230cb669a0ef0e",
+      "source_frames": 120,
+      "output_frames": 119,
+      "size": [
+        128,
+        128
+      ],
+      "duration_ms": 6000,
+      "frame_delays_ms": [
+        50,
+        100
+      ],
+      "bytes": 426671,
+      "sha256": "d96f5f1b0254c628f15b62f3af7decc842241df5a0741cb99dae265e958ead21"
+    },
+    "pet_sleep": {
+      "source": "C:\\Users\\T2071\\Downloads\\看山三视图\\刘看山动态\\瞌睡_5秒_320x320_20fps_透明.gif",
+      "source_sha256": "3fffc7dd4f76b58d57a7d921f5c2a05fe01bf0621c5f9f68b9f5dc9a4e053a59",
+      "source_frames": 100,
+      "output_frames": 97,
+      "size": [
+        128,
+        128
+      ],
+      "duration_ms": 5000,
+      "frame_delays_ms": [
+        50,
+        100,
+        150
+      ],
+      "bytes": 353195,
+      "sha256": "b3372579d76c4e35775c8a37499285f866a8b123720b6d716cae2113608fd65c"
+    },
+    "pet_play": {
+      "source": "C:\\Users\\T2071\\Downloads\\看山三视图\\刘看山动态\\运球_4秒_320x320_20fps_透明.gif",
+      "source_sha256": "a026fa4a76682fe6e3c04dd68b05b05e6c64cdbb39bd86749be1f1369f313812",
+      "source_frames": 80,
+      "output_frames": 79,
+      "size": [
+        128,
+        128
+      ],
+      "duration_ms": 4000,
+      "frame_delays_ms": [
+        50,
+        100
+      ],
+      "bytes": 310189,
+      "sha256": "a21004df4df28a5672bb695156d56cc9b9b60359792c45cae0e3e99b8212943b"
+    }
+  },
+  "pack_bytes": 3154877,
+  "partition_bytes": 8388608,
+  "partition_free_bytes": 5233731,
+  "base_sha256": "1273ffd89d44eb29afee7ba70d117eee5b28f2542837303c76518c02c16b0d94",
+  "pack_sha256": "d505e7697938c0dcbf8b5018a2c9bd3c4392e2c63d93969e5a5c960e5ec5b7ef",
+  "original_assets_preserved": 24,
+  "flash_offset": "0x800000",
+  "decoder_pixel_bytes": 81920,
+  "lzw_table_max_bytes_approx": 24576,
+  "active_decoders": 1,
+  "decoder_heap": "PSRAM only on SensairShuttle",
+  "device_flashed": false
+}

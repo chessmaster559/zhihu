@@ -19,7 +19,13 @@ LvglRawImage::LvglRawImage(void* data, size_t size) {
 
 bool LvglRawImage::IsGif() const {
     auto ptr = (const uint8_t*)image_dsc_.data;
-    return ptr[0] == 'G' && ptr[1] == 'I' && ptr[2] == 'F';
+    return ptr && image_dsc_.data_size >= 3 && ptr[0] == 'G' && ptr[1] == 'I' && ptr[2] == 'F';
+}
+
+bool LvglRawImage::IsEaf() const {
+    const auto* ptr = image_dsc_.data;
+    return ptr && image_dsc_.data_size >= 16 && ptr[0] == 0x89 &&
+           (memcmp(ptr + 1, "EAF", 3) == 0 || memcmp(ptr + 1, "AAF", 3) == 0);
 }
 
 LvglCBinImage::LvglCBinImage(void* data) {

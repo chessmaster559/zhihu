@@ -7,6 +7,7 @@ class LvglImage {
 public:
     virtual const lv_img_dsc_t* image_dsc() const = 0;
     virtual bool IsGif() const { return false; }
+    virtual bool IsEaf() const { return false; }
     virtual ~LvglImage() = default;
 };
 
@@ -15,6 +16,7 @@ public:
     LvglRawImage(void* data, size_t size);
     virtual const lv_img_dsc_t* image_dsc() const override { return &image_dsc_; }
     virtual bool IsGif() const;
+    bool IsEaf() const override;
 
 private:
     lv_img_dsc_t image_dsc_;

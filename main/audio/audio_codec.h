@@ -1,14 +1,15 @@
 #ifndef _AUDIO_CODEC_H
 #define _AUDIO_CODEC_H
 
-#include <freertos/FreeRTOS.h>
-#include <freertos/event_groups.h>
 #include <driver/i2s_std.h>
 #include <esp_idf_version.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/event_groups.h>
 
-#include <vector>
-#include <string>
+#include <atomic>
 #include <functional>
+#include <string>
+#include <vector>
 
 #include "board.h"
 
@@ -28,11 +29,14 @@ class AudioCodec {
 public:
     AudioCodec();
     virtual ~AudioCodec();
-    
+
     virtual void SetOutputVolume(int volume);
     virtual void SetInputGain(float gain);
     virtual void EnableInput(bool enable);
     virtual void EnableOutput(bool enable);
+    // The output task owns shutdown; boards may request a shorter quiet idle period.
+    virtual uint32_t output_idle_timeout_ms() const { return 15000; }
+    virtual uint32_t input_task_stack_bytes() const { return 4096; }
 
     virtual void OutputData(std::vector<int16_t>& data);
     virtual bool InputData(std::vector<int16_t>& data);
@@ -56,7 +60,7 @@ protected:
     bool duplex_ = false;
     bool input_reference_ = false;
     bool input_enabled_ = false;
-    bool output_enabled_ = false;
+    std::atomic<bool> output_enabled_{false};
     int input_sample_rate_ = 0;
     int output_sample_rate_ = 0;
     int input_channels_ = 1;
@@ -68,4 +72,4 @@ protected:
     virtual int Write(const int16_t* data, int samples) = 0;
 };
 
-#endif // _AUDIO_CODEC_H
+#endif  // _AUDIO_CODEC_H

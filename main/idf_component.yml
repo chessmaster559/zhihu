@@ -59,6 +59,10 @@ dependencies:
   waveshare/esp_lcd_touch_cst9217: ^1.0.3
   espressif/esp_lcd_touch_cst816s: ^1.1.2
   lvgl/lvgl: ~9.5.0
+  espressif/esp_lv_eaf_player:
+    version: ==0.3.0
+    rules:
+    - if: target in [esp32c5]
   esp_lvgl_port: ~2.9.0
   espressif/esp_io_expander_tca95xx_16bit: ^2.0.2
   espressif2022/image_player: ^1.1.1

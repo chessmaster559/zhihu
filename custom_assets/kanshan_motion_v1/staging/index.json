@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "srmodels": "srmodels.bin",
+  "text_font": "font_noto_sans_common_16_4.bin",
+  "text_font_meta": {
+    "charset": "common",
+    "size": 16,
+    "bpp": 4,
+    "bundle": "noto-v1"
+  },
+  "emoji_collection": [
+    {
+      "name": "angry",
+      "file": "angry.png"
+    },
+    {
+      "name": "confident",
+      "file": "confident.png"
+    },
+    {
+      "name": "confused",
+      "file": "confused.png"
+    },
+    {
+      "name": "cool",
+      "file": "cool.png"
+    },
+    {
+      "name": "crying",
+      "file": "crying.png"
+    },
+    {
+      "name": "delicious",
+      "file": "delicious.png"
+    },
+    {
+      "name": "embarrassed",
+      "file": "embarrassed.png"
+    },
+    {
+      "name": "funny",
+      "file": "funny.png"
+    },
+    {
+      "name": "happy",
+      "file": "happy.png"
+    },
+    {
+      "name": "kissy",
+      "file": "kissy.png"
+    },
+    {
+      "name": "laughing",
+      "file": "laughing.png"
+    },
+    {
+      "name": "loving",
+      "file": "loving.png"
+    },
+    {
+      "name": "neutral",
+      "file": "kanshan_idle.gif"
+    },
+    {
+      "name": "relaxed",
+      "file": "relaxed.png"
+    },
+    {
+      "name": "sad",
+      "file": "sad.png"
+    },
+    {
+      "name": "shocked",
+      "file": "shocked.png"
+    },
+    {
+      "name": "silly",
+      "file": "silly.png"
+    },
+    {
+      "name": "sleepy",
+      "file": "sleepy.png"
+    },
+    {
+      "name": "surprised",
+      "file": "surprised.png"
+    },
+    {
+      "name": "thinking",
+      "file": "thinking.png"
+    },
+    {
+      "name": "winking",
+      "file": "winking.png"
+    },
+    {
+      "name": "pet_idle",
+      "file": "pet_idle.gif"
+    },
+    {
+      "name": "pet_greeting",
+      "file": "pet_greeting.gif"
+    },
+    {
+      "name": "pet_sway",
+      "file": "pet_sway.gif"
+    },
+    {
+      "name": "pet_thinking",
+      "file": "pet_thinking.gif"
+    },
+    {
+      "name": "pet_sleep",
+      "file": "pet_sleep.gif"
+    },
+    {
+      "name": "pet_play",
+      "file": "pet_play.gif"
+    }
+  ]
+}

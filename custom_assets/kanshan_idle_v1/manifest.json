@@ -1,0 +1,22 @@
+{
+  "source_frames": 100,
+  "output_frames": 97,
+  "duration_ms": 5000,
+  "size": [
+    192,
+    192
+  ],
+  "bytes": 853560,
+  "pack_bytes": 1902691,
+  "partition_bytes": 8388608,
+  "original_assets_preserved": 23,
+  "source_sha256": "e18748d708aba1d82917f41462bbbf2f120615b60d6e15b3c5d448a444d2ae12",
+  "base_sha256": "7b1e28f160f45f23cb2be5180f2180b267f1ccabd9a516dd4dfd0f474ccb2a44",
+  "pack_sha256": "7651fca70a23416026e49d4421ab000d26aeaa06c55886e7de6147dd66c56ab9",
+  "flash_offset": "0x800000",
+  "mapping": {
+    "neutral": "kanshan_idle.gif"
+  },
+  "firmware_modified": false,
+  "device_flashed": false
+}

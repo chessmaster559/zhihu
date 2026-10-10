@@ -16,12 +16,15 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
 class LvglFont;
 class LvglImage;
+struct PetPresentation;
+enum class PetAnimationEvent : uint8_t;
 
 class Theme {
 public:
@@ -44,6 +47,9 @@ public:
     virtual void ShowNotification(const char* notification, int duration_ms = 3000);
     virtual void ShowNotification(const std::string& notification, int duration_ms = 3000);
     virtual void SetEmotion(const char* emotion);
+    virtual bool SupportsPetAnimations() const { return false; }
+    virtual void SetPetPresentation(const PetPresentation&) {}
+    virtual void SetPetAnimationCallback(std::function<void(uint32_t, PetAnimationEvent)>) {}
     virtual void SetChatMessage(const char* role, const char* content);
     virtual void ClearChatMessages();
     virtual void SetTheme(Theme* theme);

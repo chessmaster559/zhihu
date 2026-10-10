@@ -64,6 +64,22 @@ void Application::Initialize() {
     // Setup the display
     auto display = board.GetDisplay();
     display->SetupUI();
+#if CONFIG_USE_KANSHAN_PET
+    pet_enabled_ = display->SupportsPetAnimations();
+    if (pet_enabled_) {
+        const uint32_t now = esp_timer_get_time() / 1000;
+        pet_controller_.EnableAutonomy(now);
+        pet_controller_.OnDeviceState(GetDeviceState(), now);
+        display->SetPetAnimationCallback([this](uint32_t sequence, PetAnimationEvent event) {
+            // PET-THREAD: LVGL callbacks only enqueue; main task owns the controller.
+            Schedule([this, sequence, event]() {
+                if (pet_controller_.OnAnimationEvent(sequence, event, esp_timer_get_time() / 1000))
+                    RefreshPet();
+            });
+        });
+        RefreshPet();
+    }
+#endif
     // Print board name/version info
     display->SetChatMessage("system", SystemInfo::GetUserAgent().c_str());
 
@@ -255,6 +271,10 @@ void Application::Run() {
         }
 
         if (bits & MAIN_EVENT_VAD_CHANGE) {
+#if CONFIG_USE_KANSHAN_PET
+            if (audio_service_.IsVoiceDetected())
+                RecordPetActivity();
+#endif
             if (GetDeviceState() == kDeviceStateListening) {
                 auto led = Board::GetInstance().GetLed();
                 led->OnStateChanged();
@@ -274,6 +294,14 @@ void Application::Run() {
             clock_ticks_++;
             auto display = Board::GetInstance().GetDisplay();
             display->UpdateStatusBar();
+#if CONFIG_USE_KANSHAN_PET
+            if (pet_enabled_) {
+                if (audio_service_.IsVoiceDetected())
+                    RecordPetActivity();
+                if (pet_controller_.Tick(esp_timer_get_time() / 1000))
+                    RefreshPet();
+            }
+#endif
 
             // Print debug info every 10 seconds
             if (clock_ticks_ % 10 == 0) {
@@ -433,7 +461,17 @@ void Application::CheckAssetsVersion() {
     }
 
     // Apply assets
-    assets.Apply();
+    const bool applied = assets.Apply();
+#if CONFIG_USE_KANSHAN_PET
+    if (applied) {
+        Schedule([this]() {
+            if (pet_enabled_ && pet_controller_.OnAssetsReady(esp_timer_get_time() / 1000))
+                RefreshPet();
+        });
+    }
+#else
+    (void)applied;
+#endif
     display->SetChatMessage("system", "");
     display->SetEmotion("robot_2");
 }
@@ -660,10 +698,15 @@ void Application::InitializeProtocol() {
                     glyphs.clear();
                 }
                 ESP_LOGI(TAG, ">> %s", text->valuestring);
-                Schedule([display, message = std::string(text->valuestring),
+                Schedule([this, display, message = std::string(text->valuestring),
                           glyphs = std::move(glyphs), bpp]() {
                     display->AddTextGlyphs(glyphs, bpp);
                     display->SetChatMessage("user", message.c_str());
+#if CONFIG_USE_KANSHAN_PET
+                    if (pet_enabled_ &&
+                        pet_controller_.OnUserText(message, esp_timer_get_time() / 1000))
+                        RefreshPet();
+#endif
                 });
             }
         } else if (strcmp(type->valuestring, "llm") == 0) {
@@ -765,6 +808,58 @@ void Application::DismissAlert() {
         display->SetChatMessage("system", "");
     }
 }
+
+#if CONFIG_USE_KANSHAN_PET
+void Application::RefreshPet() {
+    if (pet_enabled_)
+        Board::GetInstance().GetDisplay()->SetPetPresentation(pet_controller_.current());
+}
+
+void Application::RecordPetActivity() {
+    if (pet_enabled_ && pet_controller_.OnUserActivity(esp_timer_get_time() / 1000))
+        RefreshPet();
+}
+
+void Application::NotifyPetTouch() {
+    Schedule([this]() {
+        if (pet_enabled_ && pet_controller_.SetTransientAction(PetAction::Surprise,
+                                                               esp_timer_get_time() / 1000, 4000))
+            RefreshPet();
+    });
+}
+
+void Application::NotifyPetMotion(PetMotion motion) {
+    Schedule([this, motion]() {
+        if (!pet_enabled_)
+            return;
+        const uint32_t now = esp_timer_get_time() / 1000;
+        if (motion == PetMotion::Level) {
+            if (pet_controller_.ClearMotionPose(now))
+                RefreshPet();
+            return;
+        }
+        PetAction action;
+        switch (motion) {
+            case PetMotion::Shake:
+                action = PetAction::Shaking;
+                break;
+            case PetMotion::TiltLeft:
+                action = PetAction::TiltLeft;
+                break;
+            case PetMotion::TiltRight:
+                action = PetAction::TiltRight;
+                break;
+            case PetMotion::UpsideDown:
+                action = PetAction::UpsideDown;
+                break;
+            default:
+                return;
+        }
+        if (pet_controller_.SetTransientAction(action, now, 4000))
+            RefreshPet();
+    });
+}
+#endif
 
 void Application::ToggleChatState() { xEventGroupSetBits(event_group_, MAIN_EVENT_TOGGLE_CHAT); }
 
@@ -890,6 +985,9 @@ void Application::HandleStopListeningEvent() {
 }
 
 void Application::HandleWakeWordDetectedEvent() {
+#if CONFIG_USE_KANSHAN_PET
+    RecordPetActivity();
+#endif
     if (!protocol_) {
         return;
     }
@@ -998,6 +1096,13 @@ void Application::HandleStateChangedEvent() {
     auto display = board.GetDisplay();
     auto led = board.GetLed();
     led->OnStateChanged();
+
+#if CONFIG_USE_KANSHAN_PET
+    if (pet_enabled_) {
+        pet_controller_.OnDeviceState(new_state, esp_timer_get_time() / 1000);
+        RefreshPet();
+    }
+#endif
 
     switch (new_state) {
         case kDeviceStateUnknown:

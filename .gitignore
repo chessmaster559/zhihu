@@ -16,5 +16,8 @@ main/mmap_generate_emoji.h
 .cache
 *.pyc
 *.bin
+# These two are source resources required to rebuild the C5 pet pack.
+!custom_assets/kanshan_eaf_v1/staging/font_noto_sans_common_16_4.bin
+!custom_assets/kanshan_eaf_v1/staging/srmodels.bin
 mmap_generate_*.h
 .clangd

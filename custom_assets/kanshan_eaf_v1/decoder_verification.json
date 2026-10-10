@@ -1,0 +1,56 @@
+[
+  {
+    "file": "pet_greeting.eaf",
+    "frames_verified": 80,
+    "duration_ms": 4000,
+    "decoder_heap_peak_bytes": 4432,
+    "frame_buffer_bytes": 49152,
+    "all_pixels_and_alpha": "pass",
+    "oom_cleanup": "pass"
+  },
+  {
+    "file": "pet_idle.eaf",
+    "frames_verified": 100,
+    "duration_ms": 5000,
+    "decoder_heap_peak_bytes": 4752,
+    "frame_buffer_bytes": 49152,
+    "all_pixels_and_alpha": "pass",
+    "oom_cleanup": "pass"
+  },
+  {
+    "file": "pet_play.eaf",
+    "frames_verified": 80,
+    "duration_ms": 4000,
+    "decoder_heap_peak_bytes": 4432,
+    "frame_buffer_bytes": 49152,
+    "all_pixels_and_alpha": "pass",
+    "oom_cleanup": "pass"
+  },
+  {
+    "file": "pet_sleep.eaf",
+    "frames_verified": 100,
+    "duration_ms": 5000,
+    "decoder_heap_peak_bytes": 4752,
+    "frame_buffer_bytes": 49152,
+    "all_pixels_and_alpha": "pass",
+    "oom_cleanup": "pass"
+  },
+  {
+    "file": "pet_sway.eaf",
+    "frames_verified": 60,
+    "duration_ms": 3000,
+    "decoder_heap_peak_bytes": 4112,
+    "frame_buffer_bytes": 49152,
+    "all_pixels_and_alpha": "pass",
+    "oom_cleanup": "pass"
+  },
+  {
+    "file": "pet_thinking.eaf",
+    "frames_verified": 120,
+    "duration_ms": 6000,
+    "decoder_heap_peak_bytes": 5072,
+    "frame_buffer_bytes": 49152,
+    "all_pixels_and_alpha": "pass",
+    "oom_cleanup": "pass"
+  }
+]

@@ -1,6 +1,13 @@
 #include "lcd_display.h"
 #include "assets/lang_config.h"
 #include "gif/lvgl_gif.h"
+#if CONFIG_USE_EAF_ANIMATIONS
+#include "lv_eaf.h"
+#include "lvgl_display/eaf_asset.h"
+#endif
+#if CONFIG_USE_KANSHAN_PET
+#include "pet/kanshan_bw_image.h"
+#endif
 #include "lvgl_theme.h"
 #include "settings.h"
 
@@ -323,6 +330,7 @@ MipiLcdDisplay::MipiLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel
 
 LcdDisplay::~LcdDisplay() {
     SetPreviewImage(nullptr);
+    ResetEaf();
 
     // Clean up GIF controller
     if (gif_controller_) {
@@ -1062,6 +1070,10 @@ void LcdDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
         if (gif_controller_) {
             gif_controller_->Start();
         }
+#if CONFIG_USE_EAF_ANIMATIONS
+        if (eaf_image_)
+            lv_eaf_resume(eaf_image_);
+#endif
         return;
     }
 
@@ -1074,6 +1086,10 @@ void LcdDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
     }
 
     // Hide emoji_box_
+#if CONFIG_USE_EAF_ANIMATIONS
+    if (eaf_image_)
+        lv_eaf_pause(eaf_image_);
+#endif
     if (gif_controller_) {
         gif_controller_->Stop();
     }
@@ -1129,7 +1145,111 @@ void LcdDisplay::ClearChatMessages() {
 }
 #endif
 
+void LcdDisplay::ResetEaf() {
+#if CONFIG_USE_EAF_ANIMATIONS
+    if (eaf_image_) {
+        // EAF-LIFETIME: widget destruction owns its frame buffer and LVGL timer.
+        lv_obj_delete(eaf_image_);
+        eaf_image_ = nullptr;
+    }
+#endif
+}
+
+bool LcdDisplay::SupportsPetAnimations() const {
+#if CONFIG_USE_KANSHAN_PET
+    return true;
+#else
+    return false;
+#endif
+}
+
+void LcdDisplay::SetPetAnimationCallback(
+    std::function<void(uint32_t, PetAnimationEvent)> callback) {
+#if CONFIG_USE_KANSHAN_PET
+    DisplayLockGuard lock(this);
+    pet_animation_callback_ = std::move(callback);
+#endif
+}
+
+void LcdDisplay::SetPetPresentation(const PetPresentation& presentation) {
+#if CONFIG_USE_KANSHAN_PET
+    if (!setup_ui_called_ || !emoji_image_)
+        return;
+    DisplayLockGuard lock(this);
+    // PET-IDENTITY: state/status/tts updates must not restart the current clip.
+    if (pet_presentation_valid_ && pet_presentation_.action == presentation.action &&
+        pet_presentation_.sequence == presentation.sequence)
+        return;
+    pet_presentation_ = presentation;
+    pet_presentation_valid_ = true;
+    ResetEaf();
+    if (gif_controller_) {
+        gif_controller_->Stop();
+        lv_image_set_src(emoji_image_, nullptr);
+        gif_controller_.reset();
+    }
+    const auto spec = GetPetAnimationSpec(presentation.action);
+    // PET-128: boot, provisioning and decode failures always use this Flash portrait.
+    lv_image_set_src(emoji_image_, &kKanshanBw128Image);
+    lv_image_set_rotation(emoji_image_, spec.rotation);
+    lv_obj_remove_flag(emoji_image_, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(emoji_label_, LV_OBJ_FLAG_HIDDEN);
+    if (spec.portrait) {
+        ESP_LOGI(TAG, "Kanshan: asset=boot_bw128 mode=flash128 sequence=%lu",
+                 static_cast<unsigned long>(presentation.sequence));
+        return;
+    }
+    auto theme = static_cast<LvglTheme*>(current_theme_);
+    const auto collection = theme ? theme->emoji_collection() : nullptr;
+    const auto* image = collection ? collection->GetEmojiImage(spec.asset) : nullptr;
+    if (image && image->IsEaf() &&
+        ValidateEafAsset(image->image_dsc()->data, image->image_dsc()->data_size)) {
+        eaf_image_ = lv_eaf_create(lv_obj_get_parent(emoji_image_));
+        if (eaf_image_) {
+            lv_obj_align(eaf_image_, lv_obj_get_style_align(emoji_image_, LV_PART_MAIN),
+                         lv_obj_get_style_x(emoji_image_, LV_PART_MAIN),
+                         lv_obj_get_style_y(emoji_image_, LV_PART_MAIN));
+            lv_eaf_set_frame_delay(eaf_image_, 50);
+            lv_eaf_set_src(eaf_image_, image->image_dsc());
+            lv_eaf_set_loop_enabled(eaf_image_, !spec.single);
+            lv_eaf_set_loop_count(eaf_image_, spec.single ? 0 : -1);
+            lv_image_set_rotation(eaf_image_, spec.rotation);
+            if (lv_eaf_is_loaded(eaf_image_)) {
+                // PET-CALLBACK: callback only queues a main-task event. It never
+                // destroys the EAF widget/timer currently dispatching LV_EVENT_READY.
+                lv_obj_add_event_cb(
+                    eaf_image_,
+                    [](lv_event_t* event) {
+                        auto* self = static_cast<LcdDisplay*>(lv_event_get_user_data(event));
+                        if (self->pet_animation_callback_)
+                            self->pet_animation_callback_(self->pet_presentation_.sequence,
+                                                          PetAnimationEvent::Finished);
+                    },
+                    LV_EVENT_READY, this);
+                lv_obj_add_flag(emoji_image_, LV_OBJ_FLAG_HIDDEN);
+                if (preview_image_cached_)
+                    lv_eaf_pause(eaf_image_);
+                ESP_LOGI(TAG, "Kanshan: asset=%s mode=eaf128 frames=%ld single=%d sequence=%lu",
+                         spec.asset, static_cast<long>(lv_eaf_get_total_frames(eaf_image_)),
+                         spec.single, static_cast<unsigned long>(presentation.sequence));
+                if (pet_animation_callback_)
+                    pet_animation_callback_(presentation.sequence, PetAnimationEvent::Started);
+                return;
+            }
+        }
+    }
+    ResetEaf();
+    ESP_LOGE(TAG, "Kanshan: missing/invalid 128px EAF asset %s; keeping portrait", spec.asset);
+    if (pet_animation_callback_)
+        pet_animation_callback_(presentation.sequence, PetAnimationEvent::Failed);
+#endif
+}
+
 void LcdDisplay::SetEmotion(const char* emotion) {
+    // PET-AUDIO: server emotions and service states update text/audio independently.
+    // The autonomous presentation exclusively owns the Kanshan image.
+    if (SupportsPetAnimations())
+        return;
     if (!setup_ui_called_) {
         ESP_LOGW(TAG, "SetEmotion('%s') called before SetupUI() - emotion will not be displayed!",
                  emotion);
@@ -1156,8 +1276,10 @@ void LcdDisplay::SetEmotion(const char* emotion) {
         }
         if (utf8 != nullptr && emoji_label_ != nullptr) {
             DisplayLockGuard lock(this);
+            ResetEaf();
             if (gif_controller_) {
                 gif_controller_->Stop();
+                lv_image_set_src(emoji_image_, nullptr);
                 gif_controller_.reset();
             }
             lv_obj_set_style_text_font(emoji_label_, emotion_font, 0);
@@ -1169,12 +1291,49 @@ void LcdDisplay::SetEmotion(const char* emotion) {
     }
 
     DisplayLockGuard lock(this);
+    ResetEaf();
     // Stop any running GIF animation in the same lock scope as setting new image
     // to prevent LVGL from accessing freed image data between operations
     if (gif_controller_) {
         gif_controller_->Stop();
+        // Detach the descriptor before freeing the GIF canvas on a format switch.
+        lv_image_set_src(emoji_image_, nullptr);
         gif_controller_.reset();
     }
+#if CONFIG_USE_EAF_ANIMATIONS
+    if (image->IsEaf()) {
+        const auto* asset = image->image_dsc();
+        if (!ValidateEafAsset(asset->data, asset->data_size)) {
+            ESP_LOGE(TAG, "Invalid or oversized EAF asset: %s", emotion);
+            lv_obj_add_flag(emoji_image_, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(emoji_label_, LV_OBJ_FLAG_HIDDEN);
+            return;
+        }
+        // EAF-OFFICIAL: use Espressif's RGB565(A8) decoder, with Flash-mapped input.
+        // Keep only one animation decoder alive and preserve the surrounding UI.
+        eaf_image_ = lv_eaf_create(lv_obj_get_parent(emoji_image_));
+        if (eaf_image_) {
+            lv_obj_align(eaf_image_, lv_obj_get_style_align(emoji_image_, LV_PART_MAIN),
+                         lv_obj_get_style_x(emoji_image_, LV_PART_MAIN),
+                         lv_obj_get_style_y(emoji_image_, LV_PART_MAIN));
+            lv_eaf_set_frame_delay(eaf_image_, 50);
+            lv_eaf_set_src(eaf_image_, image->image_dsc());
+            lv_eaf_set_loop_count(eaf_image_, -1);
+            if (lv_eaf_is_loaded(eaf_image_)) {
+                lv_obj_add_flag(emoji_image_, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(emoji_label_, LV_OBJ_FLAG_HIDDEN);
+                ESP_LOGI(TAG, "EAF animation: %s frames=%ld", emotion,
+                         static_cast<long>(lv_eaf_get_total_frames(eaf_image_)));
+                return;
+            }
+        }
+        ResetEaf();
+        lv_obj_add_flag(emoji_image_, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(emoji_label_, LV_OBJ_FLAG_HIDDEN);
+        ESP_LOGE(TAG, "Failed to load EAF: %s", emotion);
+        return;
+    }
+#endif
     if (image->IsGif()) {
         // Create new GIF controller
         gif_controller_ = std::make_unique<LvglGif>(image->image_dsc());

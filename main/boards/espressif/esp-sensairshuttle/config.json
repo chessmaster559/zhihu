@@ -20,9 +20,12 @@
                 "CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y",
                 "CONFIG_LWIP_IPV6=n",
                 "CONFIG_USE_ESP_WAKE_WORD=y",
-                "CONFIG_USE_EMOTE_MESSAGE_STYLE=y",
+                "CONFIG_USE_DEFAULT_MESSAGE_STYLE=y",
+                "CONFIG_USE_EAF_ANIMATIONS=y",
+                "CONFIG_USE_KANSHAN_PET=y",
+                "CONFIG_ESP_LV_EAF_ENABLE_SW_JPEG=n",
                 "CONFIG_FLASH_CUSTOM_ASSETS=y",
-                "CONFIG_CUSTOM_ASSETS_FILE=\"https://dl.espressif.com/AE/wn9_nihaoxiaozhi_tts-font_puhui_common_20_4-echoear.bin\"",
+                "CONFIG_CUSTOM_ASSETS_FILE=\"../custom_assets/kanshan_eaf_v1/kanshan_eaf_assets.bin\"",
                 "CONFIG_CODEC_DATA_ADC_SUPPORT=y"
             ]
         }

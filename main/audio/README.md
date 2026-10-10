@@ -68,8 +68,20 @@ flowchart LR
 - `OpusCodecTask` encodes uplink PCM and decodes downlink packets.
 - `AfeAudioEngine` has its own AFE fetch task on S3/P4/S31.
 
-The audio power timer still enables and disables codec ADC/DAC channels based on
-activity; the engine refactor does not change that policy.
+`AudioOutputTask` owns output enable, PCM writes, and idle shutdown. It waits for
+both decoding and playback queues to drain before closing TX, and keeps the
+output clock running while duplex input needs it. Boards can override
+`AudioCodec::output_idle_timeout_ms()` (15 seconds by default); SensairShuttle
+uses 300 ms, longer than its 60 ms PDM DMA ring, to bridge short network gaps.
+No timer closes TX during a write.
+The audio power timer requests input shutdown through the input task's event bit.
+
+SensairShuttle uses the official `esp_codec_dev` ADC DMA input at 16 kHz. Its
+640-byte conversion frame needs a larger temporary parse array, so the codec
+requests a 6144-byte input-task stack through `input_task_stack_bytes()` (other
+codecs retain the 4096-byte default). A DC blocker removes the measured analogue
+bias before wake/VAD processing. PDM software volume follows the original codec
+-50..0 dB curve and retains the saved NVS volume; zero mutes output.
 
 ## Queue and allocation policy
 

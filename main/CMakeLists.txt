@@ -888,10 +888,27 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION AND NOT BOARD_TYPE MATCHES "^[a-z0-9.-]+$")
     )
 endif()
 
-file(GLOB BOARD_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_DIR}/*.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_DIR}/*.c
-)
+if(CONFIG_BOARD_TYPE_ESP_SENSAIRSHUTTLE)
+    set(BOARD_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_DIR}/esp-sensairshuttle.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_DIR}/adc_pdm_audio_codec.cc
+    )
+    if(CONFIG_USE_KANSHAN_PET)
+        list(APPEND BOARD_SOURCES
+            ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_DIR}/bmi270_pet_motion.cc
+        )
+        list(APPEND SOURCES
+            "pet/pet_controller.cc"
+            "pet/motion_detector.cc"
+            "pet/kanshan_bw_128_image.cc"
+        )
+    endif()
+else()
+    file(GLOB BOARD_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_DIR}/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_DIR}/*.c
+    )
+endif()
 list(APPEND SOURCES ${BOARD_SOURCES})
 
 # Select one audio engine for each chip family

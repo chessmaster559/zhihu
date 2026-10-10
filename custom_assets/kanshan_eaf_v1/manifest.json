@@ -1,0 +1,60 @@
+{
+  "animations": {
+    "pet_idle.eaf": {
+      "source_frames": 98,
+      "frames": 100,
+      "frame_ms": 50,
+      "duration_ms": 5000,
+      "bytes": 748000
+    },
+    "pet_greeting.eaf": {
+      "source_frames": 79,
+      "frames": 80,
+      "frame_ms": 50,
+      "duration_ms": 4000,
+      "bytes": 604708
+    },
+    "pet_sway.eaf": {
+      "source_frames": 60,
+      "frames": 60,
+      "frame_ms": 50,
+      "duration_ms": 3000,
+      "bytes": 454816
+    },
+    "pet_thinking.eaf": {
+      "source_frames": 119,
+      "frames": 120,
+      "frame_ms": 50,
+      "duration_ms": 6000,
+      "bytes": 886712
+    },
+    "pet_sleep.eaf": {
+      "source_frames": 97,
+      "frames": 100,
+      "frame_ms": 50,
+      "duration_ms": 5000,
+      "bytes": 754772
+    },
+    "pet_play.eaf": {
+      "source_frames": 79,
+      "frames": 80,
+      "frame_ms": 50,
+      "duration_ms": 4000,
+      "bytes": 646764
+    }
+  },
+  "pack_bytes": 5108821,
+  "partition_free_bytes": 3279787,
+  "sha256": "d228c3094e9837a2e6b284d4eaaf05d25b75eaf5bf0c770bf9710d2ae61f7da3",
+  "resource_sha256": {
+    "font_noto_sans_common_16_4.bin": "6c801b34ec686e6e31223eceedea2efe5b0cf294b3556d91087a683c86a54384",
+    "srmodels.bin": "fe559fe9ed38dc041ecfbcde6568d4cdc6abb3c7073a60747e67b6083d78ce2b",
+    "pet_idle.eaf": "ad7e11416f57c524d3396e28edadaa436d13a78a7f907a5c2ec79182f8dfc9ee",
+    "pet_greeting.eaf": "6ea7664ea7b2d39daf9188fde2ac75d7c3a6b85d496419962562b386c0c85c9c",
+    "pet_sway.eaf": "655bd54fe48a8a65008c07c8e42a406f2cecf74ce45961d842d18db34ff4cf8f",
+    "pet_thinking.eaf": "55fd14ba77c0bec03de25bfa10eedcbc1a8ce932cf2407a93af0cc97ceb46ad3",
+    "pet_sleep.eaf": "43ed9cc6f105007c4161cfaf65ffda3910fa8051174538b0118e6c7eae745098",
+    "pet_play.eaf": "b1d3bd48629255e93200f7888f6c8d5baa9ffa98c65988f23f7139a7ac08ec8d",
+    "index.json": "d9855dcf42d745a2b068b400ba757fc8dcecbce3d8b128acfec1d635513771a6"
+  }
+}

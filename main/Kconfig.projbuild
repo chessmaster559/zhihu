@@ -875,6 +875,22 @@ config USE_MULTILINE_CHAT_MESSAGE
         When disabled (default), a single-line horizontally scrolling label
         is shown at the bottom of the screen.
 
+config USE_EAF_ANIMATIONS
+    bool "Use Espressif EAF animations in the LVGL display"
+    depends on BOARD_TYPE_ESP_SENSAIRSHUTTLE && SPIRAM && !USE_EMOTE_MESSAGE_STYLE
+    default y
+    help
+        Play converted EAF animations with the official esp_lv_eaf_player.
+        Keeps the LVGL chat UI; requires a matching EAF assets pack.
+
+config USE_KANSHAN_PET
+    bool "Use the autonomous 128px Kanshan desk pet"
+    depends on BOARD_TYPE_ESP_SENSAIRSHUTTLE && USE_EAF_ANIMATIONS
+    default y
+    help
+        Connect the pet controller, 128px portrait and EAF action completion
+        events. Chat and server emotions do not replace autonomous actions.
+
 choice WAKE_WORD_TYPE
     prompt "Wake Word Implementation Type"
     default USE_AFE_WAKE_WORD if (IDF_TARGET_ESP32S3 || IDF_TARGET_ESP32P4 || IDF_TARGET_ESP32S31) && SPIRAM

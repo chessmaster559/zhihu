@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "srmodels": "srmodels.bin",
+  "text_font": "font_noto_sans_common_16_4.bin",
+  "text_font_meta": {
+    "charset": "common",
+    "size": 16,
+    "bpp": 4,
+    "bundle": "noto-v1"
+  },
+  "emoji_collection": [
+    {
+      "name": "neutral",
+      "file": "pet_idle.eaf"
+    },
+    {
+      "name": "pet_idle",
+      "file": "pet_idle.eaf"
+    },
+    {
+      "name": "pet_greeting",
+      "file": "pet_greeting.eaf"
+    },
+    {
+      "name": "pet_sway",
+      "file": "pet_sway.eaf"
+    },
+    {
+      "name": "pet_thinking",
+      "file": "pet_thinking.eaf"
+    },
+    {
+      "name": "pet_sleep",
+      "file": "pet_sleep.eaf"
+    },
+    {
+      "name": "pet_play",
+      "file": "pet_play.eaf"
+    }
+  ]
+}
