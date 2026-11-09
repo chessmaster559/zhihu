@@ -1,0 +1,70 @@
+{
+  "documents": [
+    {
+      "file": "originals/mainboard-schematic-v1.0.pdf",
+      "title": "C5 Mainboard V1.0 schematic",
+      "source_url": "https://dl.espressif.com/AE/esp-dev-kits/SCH_SCH-ESP-SensairShuttle-MainBoard-V1_0_2025-12-16.pdf",
+      "resolved_url": "https://dl.espressif.com/AE/esp-dev-kits/SCH_SCH-ESP-SensairShuttle-MainBoard-V1_0_2025-12-16.pdf",
+      "retrieved_on": "2026-11-09",
+      "bytes": 618347,
+      "pages": 3,
+      "sha256": "c47bb9a4838cf43e7f97041b078a74d2287382d0d50579c8f48531f35eab8edd",
+      "copyright": "Espressif Systems; original vendor document, not relicensed as project MIT software"
+    },
+    {
+      "file": "originals/mainboard-pcb-v1.0.pdf",
+      "title": "C5 Mainboard V1.0 PCB",
+      "source_url": "https://dl.espressif.com/AE/esp-dev-kits/PCB_PCB-ESP-SensairShuttle-MainBoard-V1_0_2025-12-16.pdf",
+      "resolved_url": "https://dl.espressif.com/AE/esp-dev-kits/PCB_PCB-ESP-SensairShuttle-MainBoard-V1_0_2025-12-16.pdf",
+      "retrieved_on": "2026-11-09",
+      "bytes": 3599455,
+      "pages": 6,
+      "sha256": "9146652a9c8172087a81e22078b806c1d5ae6a89d8c6410a049c1d8dcbdc3379",
+      "copyright": "Espressif Systems; original vendor document, not relicensed as project MIT software"
+    },
+    {
+      "file": "originals/bme690-schematic-v1.0.pdf",
+      "title": "BME690 V1.0 schematic",
+      "source_url": "https://dl.espressif.com/AE/esp-dev-kits/SCH_SCH-ShuttleBoard-BME690-V1_0_2025-12-16.pdf",
+      "resolved_url": "https://dl.espressif.com/AE/esp-dev-kits/SCH_SCH-ShuttleBoard-BME690-V1_0_2025-12-16.pdf",
+      "retrieved_on": "2026-11-09",
+      "bytes": 63977,
+      "pages": 1,
+      "sha256": "51665b1db5acaf8643bdee5b15dd019ade989ccde592897036bc4eb6d1e6eab7",
+      "copyright": "Espressif Systems; original vendor document, not relicensed as project MIT software"
+    },
+    {
+      "file": "originals/bme690-pcb-v1.0.pdf",
+      "title": "BME690 V1.0 PCB",
+      "source_url": "https://dl.espressif.com/AE/esp-dev-kits/PCB_PCB-ShuttleBoard-BME690-V1_0_2025-12-16.pdf",
+      "resolved_url": "https://dl.espressif.com/AE/esp-dev-kits/PCB_PCB-ShuttleBoard-BME690-V1_0_2025-12-16.pdf",
+      "retrieved_on": "2026-11-09",
+      "bytes": 362053,
+      "pages": 4,
+      "sha256": "8cf77ca1025573bb8f08b38587af96f9284b8ba6b0e2359943a15bdcd50c1c62",
+      "copyright": "Espressif Systems; original vendor document, not relicensed as project MIT software"
+    },
+    {
+      "file": "originals/bmi270-bmm350-schematic-v1.1.pdf",
+      "title": "BMI270/BMM350 V1.1 schematic",
+      "source_url": "https://dl.espressif.com/AE/esp-dev-kits/SCH_SCH-ShuttleBoard-BMI270%26BMM350-V1_1_2025-12-16.pdf",
+      "resolved_url": "https://dl.espressif.com/AE/esp-dev-kits/SCH_SCH-ShuttleBoard-BMI270%26BMM350-V1_1_2025-12-16.pdf",
+      "retrieved_on": "2026-11-09",
+      "bytes": 118422,
+      "pages": 1,
+      "sha256": "5b6da643886a68e9970501fe0d5574892d9ec938f12853ddc7d2240ac03afa7b",
+      "copyright": "Espressif Systems; original vendor document, not relicensed as project MIT software"
+    },
+    {
+      "file": "originals/bmi270-bmm350-pcb-v1.1.pdf",
+      "title": "BMI270/BMM350 V1.1 PCB",
+      "source_url": "https://dl.espressif.com/AE/esp-dev-kits/PCB_PCB-ShuttleBoard-BMI270%26BMM350-V1_1_2025-12-16.pdf",
+      "resolved_url": "https://dl.espressif.com/AE/esp-dev-kits/PCB_PCB-ShuttleBoard-BMI270%26BMM350-V1_1_2025-12-16.pdf",
+      "retrieved_on": "2026-11-09",
+      "bytes": 706998,
+      "pages": 4,
+      "sha256": "06a85b424ad511e9ac7f7d0ff7602620deeb526ef3e1362497d4617b6dc8e6f4",
+      "copyright": "Espressif Systems; original vendor document, not relicensed as project MIT software"
+    }
+  ]
+}

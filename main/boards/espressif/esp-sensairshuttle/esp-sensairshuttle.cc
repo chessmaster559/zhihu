@@ -4,7 +4,10 @@
 #include "config.h"
 #include "touch_gesture_gate.h"
 #include "wifi_board.h"
-#if CONFIG_USE_KANSHAN_PET
+#if CONFIG_USE_BME690_NOSE
+#include "bme690_nose.h"
+#endif
+#if CONFIG_USE_KANSHAN_PET && !CONFIG_USE_BME690_NOSE
 #include "bmi270_pet_motion.h"
 #endif
 #include <driver/i2c_master.h>
@@ -135,11 +138,34 @@ private:
     Cst816d* cst816d_;
     Display* display_ = nullptr;
     Button boot_button_;
-#if CONFIG_USE_KANSHAN_PET
+#if CONFIG_USE_KANSHAN_PET || CONFIG_USE_BME690_NOSE
+    bool shuttle_pins_ready_ = false;
+#endif
+#if CONFIG_USE_BME690_NOSE
+    Bme690Nose nose_;
+#endif
+#if CONFIG_USE_KANSHAN_PET && !CONFIG_USE_BME690_NOSE
     Bmi270PetMotion pet_motion_;
 #endif
 
     void InitializeI2c() {
+#if CONFIG_USE_KANSHAN_PET || CONFIG_USE_BME690_NOSE
+        // Configure the shared Shuttle straps once, before starting any sensor.
+        // Preload CS high before enabling output: a low-to-high pulse can lock
+        // the BMI270 into SPI. SDO low selects BME690=0x76 / BMI270=0x68.
+        esp_err_t strap_error = gpio_set_level(SHUTTLE_CS_GPIO, 1);
+        if (strap_error == ESP_OK)
+            strap_error = gpio_set_level(SHUTTLE_SDO_GPIO, 0);
+        gpio_config_t straps{};
+        straps.pin_bit_mask = (1ULL << SHUTTLE_CS_GPIO) | (1ULL << SHUTTLE_SDO_GPIO);
+        straps.mode = GPIO_MODE_OUTPUT;
+        if (strap_error == ESP_OK)
+            strap_error = gpio_config(&straps);
+        shuttle_pins_ready_ = strap_error == ESP_OK;
+        if (!shuttle_pins_ready_)
+            ESP_LOGE(TAG, "Shuttle straps failed: %s; optional sensors disabled",
+                     esp_err_to_name(strap_error));
+#endif
         i2c_master_bus_config_t i2c_bus_cfg = {
             .i2c_port = I2C_NUM_0,
             .sda_io_num = LCD_TP_SDA,
@@ -275,8 +301,26 @@ public:
         InitializeButtons();
         InitializeSpi();
         InitializeLcdDisplay();
-#if CONFIG_USE_KANSHAN_PET
-        pet_motion_.Start(i2c_bus_);
+#if CONFIG_USE_KANSHAN_PET && !CONFIG_USE_BME690_NOSE
+        // The original Shuttle socket holds one sensor daughterboard at a time.
+        // Nose mode keeps pet animations/touch, without probing an absent IMU.
+        if (shuttle_pins_ready_)
+            pet_motion_.Start(i2c_bus_);
+#endif
+#if CONFIG_USE_BME690_NOSE
+        if (shuttle_pins_ready_)
+            nose_.Start(i2c_bus_);
+        McpServer::GetInstance().AddTool(
+            "self.pet.nose.get_status",
+            "读取刘看山鼻子 BME690 的最新缓存读数，用于闻一闻、查询温湿度或检查传感器。"
+            "必须根据 hardware_ok、fresh、gas_valid、heater_stable 和 self_test 判断可用性。"
+            "gas_resistance_ohm 是原始气体电阻，不是空气质量分数；未接入 BSEC 和气味训练模型，"
+            "不得据此宣称识别了具体气味、甲醛浓度、真实 CO2 或空气安全。",
+            PropertyList(), [this](const PropertyList&) -> ToolResult {
+                if (auto* json = nose_.GetStatusJson())
+                    return json;
+                return std::unexpected(std::string("BME690 status allocation failed"));
+            });
 #endif
     }
 

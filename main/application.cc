@@ -271,6 +271,7 @@ void Application::Run() {
         }
 
         if (bits & MAIN_EVENT_VAD_CHANGE) {
+            Board::GetInstance().GetDisplay()->SetVoiceActivity(audio_service_.IsVoiceDetected());
 #if CONFIG_USE_KANSHAN_PET
             if (audio_service_.IsVoiceDetected())
                 RecordPetActivity();
@@ -823,8 +824,10 @@ void Application::RecordPetActivity() {
 void Application::NotifyPetTouch() {
     Schedule([this]() {
         if (pet_enabled_ && pet_controller_.SetTransientAction(PetAction::Surprise,
-                                                               esp_timer_get_time() / 1000, 4000))
+                                                               esp_timer_get_time() / 1000, 4000)) {
             RefreshPet();
+            Board::GetInstance().GetDisplay()->ShowPetTouchEffect();
+        }
     });
 }
 

@@ -37,5 +37,17 @@
       "name": "pet_play",
       "file": "pet_play.eaf"
     }
-  ]
+  ],
+  "skin": {
+    "light": {
+      "background_image": "scene_day.bin",
+      "text_color": "#172536",
+      "background_color": "#F4F9FC"
+    },
+    "dark": {
+      "background_image": "scene_night.bin",
+      "text_color": "#FFFFFF",
+      "background_color": "#192B43"
+    }
+  }
 }

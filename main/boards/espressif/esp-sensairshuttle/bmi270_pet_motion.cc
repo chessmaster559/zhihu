@@ -13,21 +13,7 @@ constexpr uint32_t kPeriodMs = 20;
 void Bmi270PetMotion::Start(i2c_master_bus_handle_t native_bus) {
     if (task_ || !native_bus)
         return;
-    // REVIEW[FIX-IMU-CS] 先预置输出锁存值，再使能输出，避免 CS 先低后高。
-    // BMI270 上电后的 CS 上升沿会锁定 SPI 模式，I2C 将无应答（手册 6.3）。
-    // 固件只能避免自身制造的跳变；已经切到 SPI 的芯片需要复位/重新上电。
-    esp_err_t err = gpio_set_level(BMI270_CS_GPIO, 1);
-    if (err == ESP_OK)
-        err = gpio_set_level(BMI270_SDO_GPIO, 0);
-    gpio_config_t pins{};
-    pins.pin_bit_mask = (1ULL << BMI270_CS_GPIO) | (1ULL << BMI270_SDO_GPIO);
-    pins.mode = GPIO_MODE_OUTPUT;
-    if (err == ESP_OK)
-        err = gpio_config(&pins);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Pin configuration failed: %s", esp_err_to_name(err));
-        return;
-    }
+    // The board sets the shared BME690/BMI270 CS/SDO straps before creating I2C.
     native_bus_ = native_bus;
     if (xTaskCreate([](void* arg) { static_cast<Bmi270PetMotion*>(arg)->Run(); }, "bmi270_pet",
                     4096, this, 2, &task_) != pdPASS) {

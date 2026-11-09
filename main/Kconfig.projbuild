@@ -883,6 +883,18 @@ config USE_EAF_ANIMATIONS
         Play converted EAF animations with the official esp_lv_eaf_player.
         Keeps the LVGL chat UI; requires a matching EAF assets pack.
 
+config USE_BME690_NOSE
+    bool "Enable BME690 nose diagnostics on SensairShuttle"
+    depends on BOARD_TYPE_ESP_SENSAIRSHUTTLE
+    default y
+    help
+        Use the existing Shuttle I2C bus for BME690 self-test, temperature,
+        humidity, pressure and raw gas resistance. Exposes cached readings
+        through MCP. Does not provide BSEC IAQ or identify specific odors.
+        The original Shuttle socket holds one daughterboard: this option
+        replaces the BMI270 motion worker, preserving pet animations/touch.
+        Disable it when switching back to the BMI270/BMM350 daughterboard.
+
 config USE_KANSHAN_PET
     bool "Use the autonomous 128px Kanshan desk pet"
     depends on BOARD_TYPE_ESP_SENSAIRSHUTTLE && USE_EAF_ANIMATIONS

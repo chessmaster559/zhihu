@@ -4,6 +4,7 @@
 #include "gif/lvgl_gif.h"
 #include "lvgl_display.h"
 #if CONFIG_USE_KANSHAN_PET
+#include "lvgl_display/pet_overlay.h"
 #include "pet/pet_animation.h"
 #endif
 
@@ -36,6 +37,12 @@ protected:
     PetPresentation pet_presentation_{PetAction::Setup, "", 0};
     bool pet_presentation_valid_ = false;
     std::function<void(uint32_t, PetAnimationEvent)> pet_animation_callback_;
+    std::unique_ptr<PetOverlay> pet_overlay_;
+    std::shared_ptr<LvglImage> pet_scene_image_;
+    bool pet_scene_night_ = false;
+    bool pet_waiting_reply_ = false;
+    void UpdatePetScene(bool force = false);     // Requires the display lock.
+    void UpdatePetIndicator(bool voice_active);  // Requires the display lock.
 #endif
     lv_obj_t* emoji_box_ = nullptr;
     lv_obj_t* chat_message_label_ = nullptr;
@@ -55,8 +62,12 @@ protected:
 public:
     ~LcdDisplay();
     virtual void SetEmotion(const char* emotion) override;
+    void SetStatus(const char* status) override;
+    void SetVoiceActivity(bool active) override;
+    void UpdateStatusBar(bool update_all = false) override;
     bool SupportsPetAnimations() const override;
     void SetPetPresentation(const PetPresentation& presentation) override;
+    void ShowPetTouchEffect() override;
     void SetPetAnimationCallback(
         std::function<void(uint32_t, PetAnimationEvent)> callback) override;
     virtual void SetChatMessage(const char* role, const char* content) override;

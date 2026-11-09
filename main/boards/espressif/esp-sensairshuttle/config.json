@@ -23,6 +23,7 @@
                 "CONFIG_USE_DEFAULT_MESSAGE_STYLE=y",
                 "CONFIG_USE_EAF_ANIMATIONS=y",
                 "CONFIG_USE_KANSHAN_PET=y",
+                "CONFIG_USE_BME690_NOSE=y",
                 "CONFIG_ESP_LV_EAF_ENABLE_SW_JPEG=n",
                 "CONFIG_FLASH_CUSTOM_ASSETS=y",
                 "CONFIG_CUSTOM_ASSETS_FILE=\"../custom_assets/kanshan_eaf_v1/kanshan_eaf_assets.bin\"",

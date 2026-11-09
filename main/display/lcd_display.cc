@@ -6,7 +6,11 @@
 #include "lvgl_display/eaf_asset.h"
 #endif
 #if CONFIG_USE_KANSHAN_PET
+#include <ctime>
+#include "application.h"
+#include "lvgl_display/pet_scene_style.h"
 #include "pet/kanshan_bw_image.h"
+#include "pet/pet_scene_policy.h"
 #endif
 #include "lvgl_theme.h"
 #include "settings.h"
@@ -330,6 +334,12 @@ MipiLcdDisplay::MipiLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel
 
 LcdDisplay::~LcdDisplay() {
     SetPreviewImage(nullptr);
+#if CONFIG_USE_KANSHAN_PET
+    {
+        DisplayLockGuard lock(this);
+        pet_overlay_.reset();
+    }
+#endif
     ResetEaf();
 
     // Clean up GIF controller
@@ -1041,6 +1051,15 @@ void LcdDisplay::SetupUI() {
     lv_obj_add_flag(bottom_bar_, LV_OBJ_FLAG_HIDDEN);  // Hide until there is content
 #endif
 
+#if CONFIG_USE_KANSHAN_PET
+    // Reserve the top for speech and the bottom for STT; keep the 128px pet intact.
+    lv_obj_align(emoji_box_, LV_ALIGN_CENTER, 0, (height_ - 128) / 2 - text_font->line_height - 10);
+    lv_obj_remove_flag(emoji_box_, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_remove_flag(emoji_box_, LV_OBJ_FLAG_SCROLLABLE);
+    pet_overlay_ = std::make_unique<PetOverlay>(screen, width_, height_, text_font);
+    pet_overlay_->SetTheme(text_font, lvgl_theme->text_color(), lvgl_theme->background_color());
+#endif
+
     low_battery_popup_ = lv_obj_create(screen);
     lv_obj_set_scrollbar_mode(low_battery_popup_, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_size(low_battery_popup_, LV_HOR_RES * 0.9, text_font->line_height * 2);
@@ -1105,6 +1124,19 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
                  role, content);
     }
     DisplayLockGuard lock(this);
+#if CONFIG_USE_KANSHAN_PET
+    if (pet_overlay_) {
+        pet_overlay_->SetMessage(role, content);
+        if (role && content && content[0]) {
+            if (strcmp(role, "user") == 0)
+                pet_waiting_reply_ = true;
+            else if (strcmp(role, "assistant") == 0 || strcmp(role, "system") == 0)
+                pet_waiting_reply_ = false;
+        }
+        UpdatePetIndicator(Application::GetInstance().IsVoiceDetected());
+        return;
+    }
+#endif
     if (chat_message_label_ == nullptr) {
         if (setup_ui_called_) {
             ESP_LOGW(TAG,
@@ -1136,6 +1168,13 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
 void LcdDisplay::ClearChatMessages() {
     DisplayLockGuard lock(this);
     // In non-wechat mode, just clear the chat message label and hide the bar
+#if CONFIG_USE_KANSHAN_PET
+    pet_waiting_reply_ = false;
+    if (pet_overlay_) {
+        pet_overlay_->ClearMessages();
+        UpdatePetIndicator(Application::GetInstance().IsVoiceDetected());
+    }
+#endif
     if (chat_message_label_ != nullptr) {
         lv_label_set_text(chat_message_label_, "");
     }
@@ -1163,6 +1202,105 @@ bool LcdDisplay::SupportsPetAnimations() const {
 #endif
 }
 
+void LcdDisplay::UpdateStatusBar(bool update_all) {
+    LvglDisplay::UpdateStatusBar(update_all);
+#if CONFIG_USE_KANSHAN_PET
+    DisplayLockGuard lock(this);
+    if (setup_ui_called_ && container_) {
+        UpdatePetScene();
+        UpdatePetIndicator(Application::GetInstance().IsVoiceDetected());
+    }
+#endif
+}
+
+void LcdDisplay::SetStatus(const char* status) {
+#if CONFIG_USE_KANSHAN_PET
+    // Leave important activation, provisioning and error messages intact.
+    // Store an empty quiet status: the notification timer may later unhide it.
+    const bool clock = status && strlen(status) == 5 && status[2] == ':' && status[0] >= '0' &&
+                       status[0] <= '2' && status[1] >= '0' && status[1] <= '9' &&
+                       status[3] >= '0' && status[3] <= '5' && status[4] >= '0' &&
+                       status[4] <= '9' &&
+                       Application::GetInstance().GetDeviceState() == kDeviceStateIdle;
+    const bool quiet = status && (strcmp(status, Lang::Strings::STANDBY) == 0 ||
+                                  strcmp(status, Lang::Strings::LISTENING) == 0 ||
+                                  strcmp(status, Lang::Strings::SPEAKING) == 0 ||
+                                  strcmp(status, Lang::Strings::CONNECTING) == 0 || clock);
+    LvglDisplay::SetStatus(quiet ? "" : status);
+    DisplayLockGuard lock(this);
+    UpdatePetIndicator(Application::GetInstance().IsVoiceDetected());
+#else
+    LvglDisplay::SetStatus(status);
+#endif
+}
+
+void LcdDisplay::SetVoiceActivity(bool active) {
+#if CONFIG_USE_KANSHAN_PET
+    DisplayLockGuard lock(this);
+    UpdatePetIndicator(active);
+#endif
+}
+
+#if CONFIG_USE_KANSHAN_PET
+void LcdDisplay::UpdatePetIndicator(bool voice_active) {
+    if (!pet_overlay_)
+        return;
+    const auto state = Application::GetInstance().GetDeviceState();
+    const bool sleeping =
+        pet_presentation_valid_ && pet_presentation_.action == PetAction::Sleeping;
+    auto indicator = PetOverlay::Indicator::Hidden;
+    if (state == kDeviceStateListening) {
+        // The pet can doze while the audio channel remains open. Its autonomous
+        // pose must not hide the fact that a tap already enabled listening.
+        indicator = voice_active         ? PetOverlay::Indicator::Hearing
+                    : pet_waiting_reply_ ? PetOverlay::Indicator::Thinking
+                                         : PetOverlay::Indicator::Listening;
+    } else if (!sleeping &&
+               (state == kDeviceStateConnecting ||
+                (pet_presentation_valid_ && pet_presentation_.action == PetAction::Thinking))) {
+        indicator = PetOverlay::Indicator::Thinking;
+    }
+    pet_overlay_->SetIndicator(indicator);
+}
+
+void LcdDisplay::UpdatePetScene(bool force) {
+    const time_t now = time(nullptr);
+    struct tm local{};
+    const bool clock_valid = localtime_r(&now, &local) && local.tm_year >= 2025 - 1900;
+    const bool sleeping =
+        pet_presentation_valid_ && pet_presentation_.action == PetAction::Sleeping;
+    const bool night = UseNightPetScene(sleeping, clock_valid ? local.tm_hour : -1);
+    auto* scene = LvglThemeManager::GetInstance().GetTheme(night ? "dark" : "light");
+    auto image = scene ? scene->background_image() : nullptr;
+    // Old asset packs have no scenes: keep the existing plain background.
+    if (!image || (!force && image == pet_scene_image_ && night == pet_scene_night_))
+        return;
+    lv_obj_set_style_bg_image_src(container_, image->image_dsc(), 0);
+    pet_scene_image_ = std::move(image);  // Keep the mapped descriptor alive.
+    pet_scene_night_ = night;
+    const auto position = GetPetPosition(width_, height_, 0, true);
+    lv_obj_align(emoji_box_, LV_ALIGN_CENTER, position.x - width_ / 2, position.y - height_ / 2);
+    ApplyPetSceneTint(emoji_image_, night);
+    ApplyPetSceneTint(eaf_image_, night);
+    const auto foreground = scene->text_color();
+    const auto background = scene->background_color();
+    lv_obj_set_style_bg_color(top_bar_, background, 0);
+    lv_obj_t* labels[] = {network_label_, status_label_, notification_label_, mute_label_,
+                          battery_label_};
+    for (auto* label : labels) {
+        if (label)
+            lv_obj_set_style_text_color(label, foreground, 0);
+    }
+    if (pet_overlay_) {
+        pet_overlay_->SetPetPosition(position.x, position.y);
+        pet_overlay_->SetSceneColors(foreground, background, night);
+    }
+    // Do not call SetTheme(): scene changes must not write NVS or restart EAF.
+    ESP_LOGI(TAG, "Kanshan scene=%s reason=%s clock_valid=%d", night ? "night" : "day",
+             sleeping ? "sleep" : "clock", clock_valid);
+}
+#endif
+
 void LcdDisplay::SetPetAnimationCallback(
     std::function<void(uint32_t, PetAnimationEvent)> callback) {
 #if CONFIG_USE_KANSHAN_PET
@@ -1182,6 +1320,10 @@ void LcdDisplay::SetPetPresentation(const PetPresentation& presentation) {
         return;
     pet_presentation_ = presentation;
     pet_presentation_valid_ = true;
+    if (pet_overlay_)
+        pet_overlay_->SetSleeping(presentation.action == PetAction::Sleeping);
+    UpdatePetIndicator(Application::GetInstance().IsVoiceDetected());
+    UpdatePetScene();
     ResetEaf();
     if (gif_controller_) {
         gif_controller_->Stop();
@@ -1191,6 +1333,7 @@ void LcdDisplay::SetPetPresentation(const PetPresentation& presentation) {
     const auto spec = GetPetAnimationSpec(presentation.action);
     // PET-128: boot, provisioning and decode failures always use this Flash portrait.
     lv_image_set_src(emoji_image_, &kKanshanBw128Image);
+    ApplyPetSceneTint(emoji_image_, pet_scene_image_ && pet_scene_night_);
     lv_image_set_rotation(emoji_image_, spec.rotation);
     lv_obj_remove_flag(emoji_image_, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(emoji_label_, LV_OBJ_FLAG_HIDDEN);
@@ -1211,6 +1354,9 @@ void LcdDisplay::SetPetPresentation(const PetPresentation& presentation) {
                          lv_obj_get_style_y(emoji_image_, LV_PART_MAIN));
             lv_eaf_set_frame_delay(eaf_image_, 50);
             lv_eaf_set_src(eaf_image_, image->image_dsc());
+            // A newly created player must inherit the current tint even when
+            // UpdatePetScene() returned early for an unchanged background.
+            ApplyPetSceneTint(eaf_image_, pet_scene_image_ && pet_scene_night_);
             lv_eaf_set_loop_enabled(eaf_image_, !spec.single);
             lv_eaf_set_loop_count(eaf_image_, spec.single ? 0 : -1);
             lv_image_set_rotation(eaf_image_, spec.rotation);
@@ -1242,6 +1388,14 @@ void LcdDisplay::SetPetPresentation(const PetPresentation& presentation) {
     ESP_LOGE(TAG, "Kanshan: missing/invalid 128px EAF asset %s; keeping portrait", spec.asset);
     if (pet_animation_callback_)
         pet_animation_callback_(presentation.sequence, PetAnimationEvent::Failed);
+#endif
+}
+
+void LcdDisplay::ShowPetTouchEffect() {
+#if CONFIG_USE_KANSHAN_PET
+    DisplayLockGuard lock(this);
+    if (pet_overlay_)
+        pet_overlay_->ShowHearts();
 #endif
 }
 
@@ -1517,12 +1671,27 @@ void LcdDisplay::SetTheme(Theme* theme) {
     lv_obj_set_style_bg_color(low_battery_popup_, lvgl_theme->low_battery_color(), 0);
 
     // No errors occurred. Save theme to settings
+#if CONFIG_USE_KANSHAN_PET
+    if (pet_overlay_) {
+        pet_overlay_->SetTheme(text_font, lvgl_theme->text_color(), lvgl_theme->background_color());
+        const auto position =
+            GetPetPosition(width_, height_, text_font->line_height, pet_scene_image_ != nullptr);
+        lv_obj_align(emoji_box_, LV_ALIGN_CENTER, position.x - width_ / 2,
+                     position.y - height_ / 2);
+        pet_overlay_->SetPetPosition(position.x, position.y);
+    }
+    UpdatePetScene(true);
+#endif
     Display::SetTheme(lvgl_theme);
 }
 
 void LcdDisplay::SetHideSubtitle(bool hide) {
     DisplayLockGuard lock(this);
     hide_subtitle_ = hide;
+#if CONFIG_USE_KANSHAN_PET
+    if (pet_overlay_)
+        pet_overlay_->SetHidden(hide);
+#endif
 
     // Immediately update UI visibility based on the setting
     if (bottom_bar_ != nullptr) {

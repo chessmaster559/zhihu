@@ -21,9 +21,11 @@
 #define LCD_TP_SCL GPIO_NUM_3
 #define LCD_TP_SDA GPIO_NUM_2
 
-// Existing BMI270 daughterboard straps on this same hardware revision.
-#define BMI270_CS_GPIO GPIO_NUM_10
-#define BMI270_SDO_GPIO GPIO_NUM_9
+// The original BME690 and BMI270 daughterboards share these interface straps.
+#define SHUTTLE_CS_GPIO GPIO_NUM_10
+#define SHUTTLE_SDO_GPIO GPIO_NUM_9
+#define BMI270_CS_GPIO SHUTTLE_CS_GPIO
+#define BMI270_SDO_GPIO SHUTTLE_SDO_GPIO
 #define BMI270_PET_I2C_ADDRESS 0x68
 #define BMI270_PET_LATERAL_SIGN 1
 

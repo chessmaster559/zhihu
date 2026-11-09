@@ -9,6 +9,8 @@
 - `kanshan_motion_v1/staging/pet_*.gif`：重新转换和逐帧解码验证的原始动作。
 - `kanshan_bw/liukanshan_bw_source.png`：重新生成开机黑白照的源图。
   当前运行使用 `main/pet/kanshan_bw_128_image.cc`，不在运行时读取 PNG。
+- `scenes/igloo_day_284x240.png` 和 `scenes/igloo_night_284x240.png`：昼夜背景
+  源图，当前打包必需。它们被转换成两张 RGB565 CBin，JPEG 版本仅作备用。
 - 素材生成、验证脚本及 `main/pet/` 中当前构建引用的源码。
 
 旧 staging 目录中的通用 32/48px PNG 已无运行引用，可以清理。128px 黑白照的
@@ -21,3 +23,5 @@
 `.bin` 扩展名不代表临时文件：当前 staging 的字体和 `srmodels.bin` 是
 不可缺少的源资源，已从通用忽略规则中单独放行。它们需要一同提交，
 否则新检出的工程不能重建完整素材包。设备 NVS 备份含配置数据，应留在本地。
+`staging/scene_day.bin` 和 `scene_night.bin` 是可从上述 PNG 重建的派生资源，
+与不可缺少的字体、唤醒模型源文件不同，不需要放行 Git 忽略规则。

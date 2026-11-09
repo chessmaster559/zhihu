@@ -893,14 +893,22 @@ if(CONFIG_BOARD_TYPE_ESP_SENSAIRSHUTTLE)
         ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_DIR}/esp-sensairshuttle.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_DIR}/adc_pdm_audio_codec.cc
     )
-    if(CONFIG_USE_KANSHAN_PET)
+    if(CONFIG_USE_BME690_NOSE)
         list(APPEND BOARD_SOURCES
-            ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_DIR}/bmi270_pet_motion.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_DIR}/bme690_nose.cc
         )
+    endif()
+    if(CONFIG_USE_KANSHAN_PET)
+        if(NOT CONFIG_USE_BME690_NOSE)
+            list(APPEND BOARD_SOURCES
+                ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_DIR}/bmi270_pet_motion.cc
+            )
+        endif()
         list(APPEND SOURCES
             "pet/pet_controller.cc"
             "pet/motion_detector.cc"
             "pet/kanshan_bw_128_image.cc"
+            "display/lvgl_display/pet_overlay.cc"
         )
     endif()
 else()

@@ -1,51 +1,45 @@
 {
   "animations": {
     "pet_idle.eaf": {
-      "source_frames": 98,
       "frames": 100,
       "frame_ms": 50,
       "duration_ms": 5000,
       "bytes": 748000
     },
     "pet_greeting.eaf": {
-      "source_frames": 79,
       "frames": 80,
       "frame_ms": 50,
       "duration_ms": 4000,
       "bytes": 604708
     },
     "pet_sway.eaf": {
-      "source_frames": 60,
       "frames": 60,
       "frame_ms": 50,
       "duration_ms": 3000,
       "bytes": 454816
     },
     "pet_thinking.eaf": {
-      "source_frames": 119,
       "frames": 120,
       "frame_ms": 50,
       "duration_ms": 6000,
       "bytes": 886712
     },
     "pet_sleep.eaf": {
-      "source_frames": 97,
       "frames": 100,
       "frame_ms": 50,
       "duration_ms": 5000,
       "bytes": 754772
     },
     "pet_play.eaf": {
-      "source_frames": 79,
       "frames": 80,
       "frame_ms": 50,
       "duration_ms": 4000,
       "bytes": 646764
     }
   },
-  "pack_bytes": 5108821,
-  "partition_free_bytes": 3279787,
-  "sha256": "d228c3094e9837a2e6b284d4eaaf05d25b75eaf5bf0c770bf9710d2ae61f7da3",
+  "pack_bytes": 5381890,
+  "partition_free_bytes": 3006718,
+  "sha256": "541d2e0af581d1789429dc2d4338423b1c37a6986d378b7afa5919c09bc1396a",
   "resource_sha256": {
     "font_noto_sans_common_16_4.bin": "6c801b34ec686e6e31223eceedea2efe5b0cf294b3556d91087a683c86a54384",
     "srmodels.bin": "fe559fe9ed38dc041ecfbcde6568d4cdc6abb3c7073a60747e67b6083d78ce2b",
@@ -55,6 +49,8 @@
     "pet_thinking.eaf": "55fd14ba77c0bec03de25bfa10eedcbc1a8ce932cf2407a93af0cc97ceb46ad3",
     "pet_sleep.eaf": "43ed9cc6f105007c4161cfaf65ffda3910fa8051174538b0118e6c7eae745098",
     "pet_play.eaf": "b1d3bd48629255e93200f7888f6c8d5baa9ffa98c65988f23f7139a7ac08ec8d",
-    "index.json": "d9855dcf42d745a2b068b400ba757fc8dcecbce3d8b128acfec1d635513771a6"
+    "scene_day.bin": "c2367830c7ca24c4f1f38676cdfd3ecc644ce60f30dc07f94263bbb28d957595",
+    "scene_night.bin": "bb2455ff42dcdeee6868a168a0ce8da8510fac6ef31a31f47b68bd52446d36c8",
+    "index.json": "e56109c177f79a51de6ace140629e244edbe29c321804ee4e07ee3d849d83fc9"
   }
 }

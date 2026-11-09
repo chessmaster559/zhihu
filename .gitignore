@@ -1,4 +1,6 @@
 tmp/
+# Local copies fetched from vendor hardware documentation; publish source links/checksums.
+docs/hardware/originals/
 components/
 managed_components/
 build/

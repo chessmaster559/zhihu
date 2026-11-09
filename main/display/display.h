@@ -49,6 +49,8 @@ public:
     virtual void SetEmotion(const char* emotion);
     virtual bool SupportsPetAnimations() const { return false; }
     virtual void SetPetPresentation(const PetPresentation&) {}
+    virtual void ShowPetTouchEffect() {}
+    virtual void SetVoiceActivity(bool) {}
     virtual void SetPetAnimationCallback(std::function<void(uint32_t, PetAnimationEvent)>) {}
     virtual void SetChatMessage(const char* role, const char* content);
     virtual void ClearChatMessages();

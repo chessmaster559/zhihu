@@ -14,6 +14,9 @@ class RuntimePolicyTests(unittest.TestCase):
     def test_pet_idle_policy(self):
         run_native_test(self, ["scripts/tests/pet_idle_policy_test.cc"], ["main/pet"])
 
+    def test_pet_scene_policy(self):
+        run_native_test(self, ["scripts/tests/pet_scene_policy_test.cc"], ["main/pet"])
+
     def test_capture_retry(self):
         run_native_test(self, ["scripts/tests/capture_retry_policy_test.cc"], ["main/audio"])
 

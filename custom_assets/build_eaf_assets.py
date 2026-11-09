@@ -19,9 +19,37 @@ from build_idle_assets import unpack
 ROOT = Path(__file__).resolve().parents[1]
 FRAME_MS = 50
 PET_ACTIONS = ("pet_idle", "pet_greeting", "pet_sway", "pet_thinking", "pet_sleep", "pet_play")
+SCENE_FILES = {"light": "scene_day.bin", "dark": "scene_night.bin"}
 
 
-def prepare_pet_assets(original, pack_only=False):
+def encode_scene(source):
+    """32-bit LVGL9 CBin descriptor + opaque RGB565 pixels, read directly from mmap.
+
+    C5 has 32-bit pointers. Pixels begin after the 28-byte lv_image_dsc_t;
+    the existing cbin loader fixes the relative data pointer when loading.
+    """
+    with Image.open(io.BytesIO(source)) as image:
+        if image.size != (284, 240):
+            raise ValueError("Scene images must be 284x240")
+        rgba = image.convert("RGBA")
+        if rgba.getextrema()[3] != (255, 255):
+            raise ValueError("Scene images must be opaque")
+        rgb = rgba.convert("RGB").tobytes()
+    pixels = bytearray(284 * 240 * 2)
+    for i in range(284 * 240):
+        r, g, b = rgb[i * 3:i * 3 + 3]
+        struct.pack_into("<H", pixels, i * 2, ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3))
+    # magic, RGB565, flags, w, h, stride, reserved, size, data offset, reserved*2.
+    return struct.pack("<BB5H4I", 0x19, 0x12, 0, 284, 240, 568, 0, len(pixels), 28, 0, 0) + pixels
+
+
+def validate_scene(blob):
+    expected = struct.pack("<BB5H4I", 0x19, 0x12, 0, 284, 240, 568, 0, 136320, 28, 0, 0)
+    if len(blob) != 136348 or blob[:28] != expected:
+        raise ValueError("Invalid 32-bit RGB565 scene")
+
+
+def prepare_pet_assets(original, pack_only=False, scene_sources=None):
     index = json.loads(original["index.json"])
     files, stats = {}, {}
     for key in ("text_font", "srmodels"):
@@ -60,6 +88,22 @@ def prepare_pet_assets(original, pack_only=False):
     # Only runtime pet names survive. Deleted 32/48px emotions cannot return.
     index["emoji_collection"] = [{"name": "neutral", "file": "pet_idle.eaf"}]
     index["emoji_collection"] += [{"name": action, "file": action + ".eaf"} for action in PET_ACTIONS]
+    if scene_sources is not None:
+        index["skin"] = {}
+        for skin, name in SCENE_FILES.items():
+            if skin not in scene_sources:
+                raise ValueError("Required scene source missing: " + skin)
+            files[name] = encode_scene(scene_sources[skin])
+            index["skin"][skin] = {"background_image": name,
+                "text_color": "#FFFFFF" if skin == "dark" else "#172536",
+                "background_color": "#192B43" if skin == "dark" else "#F4F9FC"}
+    elif "skin" in index:
+        # Preserve scenes when repacking an already-converted bundle.
+        for skin, name in SCENE_FILES.items():
+            if index["skin"].get(skin, {}).get("background_image") != name or name not in original:
+                raise ValueError("Required scene resource missing: " + name)
+            validate_scene(original[name])
+            files[name] = original[name]
     files["index.json"] = json.dumps(index, ensure_ascii=False, indent=2).encode("utf-8")
     return files, stats
 
@@ -156,6 +200,8 @@ def main():
     parser.add_argument("--base", type=Path, help="Optional legacy GIF pack; otherwise use source files")
     parser.add_argument("--source", type=Path, default=ROOT / "custom_assets/kanshan_eaf_v1/staging")
     parser.add_argument("--gif-source", type=Path, default=ROOT / "custom_assets/kanshan_motion_v1/staging")
+    parser.add_argument("--scenes", type=Path, default=ROOT / "custom_assets/scenes",
+                        help="Required day/night 284x240 PNG source directory")
     parser.add_argument("--pack-only", action="store_true", help="Pack existing EAFs without original GIF archives")
     parser.add_argument("--output", type=Path, default=ROOT / "custom_assets/kanshan_eaf_v1")
     args = parser.parse_args()
@@ -174,7 +220,9 @@ def main():
         folder, suffix = (args.source, ".eaf") if args.pack_only else (args.gif_source, ".gif")
         for action in PET_ACTIONS:
             original[action + suffix] = (folder / (action + suffix)).read_bytes()
-    files, stats = prepare_pet_assets(original, args.pack_only)
+    scenes = {skin: (args.scenes / ("igloo_" + ("day" if skin == "light" else "night") +
+              "_284x240.png")).read_bytes() for skin in SCENE_FILES}
+    files, stats = prepare_pet_assets(original, args.pack_only, scenes)
     blob = pack_pet_assets(files, args.output)
     size = len(blob)
     manifest = {"animations": stats, "pack_bytes": size, "partition_free_bytes": 8 * 1024 * 1024 - size,

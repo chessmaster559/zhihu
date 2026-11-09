@@ -10,12 +10,60 @@ from native_test_support import run_native_test
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "custom_assets"))
-from build_eaf_assets import PET_ACTIONS, convert_gif, pack_pet_assets, prepare_pet_assets
+from build_eaf_assets import (PET_ACTIONS, SCENE_FILES, convert_gif, encode_scene,
+                             pack_pet_assets, prepare_pet_assets)
 from build_idle_assets import unpack
 from PIL import Image
 
 
 class EafAssetTests(unittest.TestCase):
+    def scene_sources(self):
+        result = {}
+        for skin, color in (("light", (248, 128, 24)), ("dark", (16, 32, 64))):
+            source = io.BytesIO()
+            Image.new("RGB", (284, 240), color).save(source, format="PNG")
+            result[skin] = source.getvalue()
+        return result
+
+    def test_scene_pixels_and_real_pack_roundtrip(self):
+        files, _ = prepare_pet_assets(self.pet_sources(), scene_sources=self.scene_sources())
+        self.assertEqual(len(files), 11)
+        index = json.loads(files["index.json"])
+        for skin, name in SCENE_FILES.items():
+            self.assertEqual(index["skin"][skin]["background_image"], name)
+            header = struct.unpack_from("<BB5H4I", files[name])
+            self.assertEqual(header, (0x19, 0x12, 0, 284, 240, 568, 0, 136320, 28, 0, 0))
+            self.assertEqual(len(files[name]), 28 + 284 * 240 * 2)
+        self.assertEqual(struct.unpack_from("<H", files["scene_day.bin"], 28)[0], 0xfc03)
+        with tempfile.TemporaryDirectory() as temp:
+            blob = pack_pet_assets(files, Path(temp))
+            self.assertEqual(unpack(blob), files)
+        rebuilt, _ = prepare_pet_assets(files, pack_only=True)
+        self.assertEqual(rebuilt, files)
+
+    def test_scene_missing_or_wrong_size_rejected(self):
+        with self.assertRaisesRegex(ValueError, "scene source missing"):
+            prepare_pet_assets(self.pet_sources(), scene_sources={})
+        source = io.BytesIO()
+        Image.new("RGB", (128, 128)).save(source, format="PNG")
+        with self.assertRaisesRegex(ValueError, "284x240"):
+            encode_scene(source.getvalue())
+        source = io.BytesIO()
+        Image.new("RGBA", (284, 240), (0, 0, 0, 0)).save(source, format="PNG")
+        with self.assertRaisesRegex(ValueError, "opaque"):
+            encode_scene(source.getvalue())
+
+    def test_repack_rejects_missing_or_corrupted_scene(self):
+        files, _ = prepare_pet_assets(self.pet_sources(), scene_sources=self.scene_sources())
+        for corrupted in (False, True):
+            candidate = dict(files)
+            if corrupted:
+                candidate["scene_day.bin"] = b"bad scene"
+            else:
+                del candidate["scene_day.bin"]
+            with self.assertRaisesRegex(ValueError, "scene"):
+                prepare_pet_assets(candidate, pack_only=True)
+
     def pet_sources(self):
         source = io.BytesIO()
         Image.new("RGB", (128, 128), "white").save(source, format="GIF", duration=50)

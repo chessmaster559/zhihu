@@ -1,3 +1,7 @@
+> 本仓库当前定制对象为刘看山 ESP32-C5 桌宠。请优先阅读
+> [C5 技术文档](docs/c5/README.md)、[硬件资料](docs/hardware/README.md)和
+> [构建烧录](docs/c5/build-and-flash.md)。下文为保留的上游通用说明。
+
 # An MCP-based Chatbot
 
 （中文 | [English](README.md) | [日本語](README_ja.md)）
