@@ -31,7 +31,7 @@ python custom_assets/build_eaf_assets.py --pack-only
 包含六组 EAF、字体、唤醒模型、两张场景 CBin 和索引，共 11 个文件；索引
 不再引用已删除的 21 个通用 PNG 表情。打包只接收这些资源，即使 staging
 残留旧表情 PNG 也不会带入。昼夜场景从 `../scenes/igloo_*_284x240.png`
-转换，`--pack-only` 同样需要这两张 PNG；JPEG 备用图不进入发布包。
+转换，`--pack-only` 同样需要这两张 PNG；未使用的 JPEG 备用图已清理。
 每张背景为 28 B 的 C5/LVGL9 CBin 描述符加 136,320 B RGB565 像素，像素
 直接从映射的 Flash 读取，不在运行时解码 PNG/JPEG 或分配整屏背景缓冲。
 单个解码帧缓冲 49,152 字节，组件优先使用 PSRAM；主机实测官方解码器

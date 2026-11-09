@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "custom_assets"))
 from build_eaf_assets import (PET_ACTIONS, SCENE_FILES, convert_gif, encode_scene,
                              pack_pet_assets, prepare_pet_assets)
-from build_idle_assets import unpack
+from asset_pack import unpack
 from PIL import Image
 
 

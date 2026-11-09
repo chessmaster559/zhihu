@@ -1,6 +1,6 @@
 # 桌宠、字幕与交互
 
-[返回目录](README.md) · [历史布局预览](../c5-pet-refinement.md)
+[返回目录](README.md) · [布局预览](../images/c5-pet-refinement-preview.png)
 
 ## 动作规则
 

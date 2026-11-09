@@ -1,27 +1,27 @@
-# C5 看山素材清理说明
+# 当前 C5 素材与工具
 
-当前板卡发布配置只使用 `kanshan_eaf_v1/kanshan_eaf_assets.bin`。
-该包可以用 `python custom_assets/build_eaf_assets.py --pack-only` 重建。
+发布配置使用 `kanshan_eaf_v1/kanshan_eaf_assets.bin`，在工程根目录执行：
 
-需要保留：
+```sh
+python custom_assets/build_eaf_assets.py --pack-only
+```
 
-- `kanshan_eaf_v1/staging/`：六组 128×128 EAF、索引、中文字体和唤醒模型。
-- `kanshan_motion_v1/staging/pet_*.gif`：重新转换和逐帧解码验证的原始动作。
-- `kanshan_bw/liukanshan_bw_source.png`：重新生成开机黑白照的源图。
-  当前运行使用 `main/pet/kanshan_bw_128_image.cc`，不在运行时读取 PNG。
-- `scenes/igloo_day_284x240.png` 和 `scenes/igloo_night_284x240.png`：昼夜背景
-  源图，当前打包必需。它们被转换成两张 RGB565 CBin，JPEG 版本仅作备用。
-- 素材生成、验证脚本及 `main/pet/` 中当前构建引用的源码。
+| 路径 | 当前用途 |
+| --- | --- |
+| `kanshan_eaf_v1/staging/` | 六组 128px EAF、索引、中文字体和唤醒模型 |
+| `kanshan_motion_v1/staging/pet_*.gif` | 六组原始动作，供重新转换和真实解码器验证 |
+| `kanshan_bw/liukanshan_bw_source.png` | 128px 开机/配网照的源图 |
+| `kanshan_bw/liukanshan_bw_128.png` | 静态照预览；运行时使用固件内的编码资源 |
+| `scenes/igloo_*_284x240.png` | 昼夜背景源图，打包时转换为 RGB565 CBin |
+| `build_eaf_assets.py` / `asset_pack.py` | 当前素材转换、打包及校验解包 |
+| `build_bw_avatar.py` | 生成当前 128px Flash 静态图，默认即为 128px |
+| `verify_eaf_decoder.py` / `eaf_decoder_test_support.py` | 官方 EAF 解码器逐帧、alpha、时长和低内存验证 |
+| `capture_runtime.py` | C5 串口诊断采集，可指定串口和输出路径 |
 
-旧 staging 目录中的通用 32/48px PNG 已无运行引用，可以清理。128px 黑白照的
-预览 PNG 不影响运行，但可帮助核对重新生成的资源。64px 头像、旧火柴人渲染器
-不在当前 C5 构建中；`kanshan_idle_v1`、`kanshan_idle_lowmem_v2`、`psram_fix`
-主要是历史素材、诊断日志及回滚备份，删除会失去历史记录或回滚能力。
-当前 C5 打包不再依赖这些历史目录；旧的 `build_idle_assets.py`、
-`build_motion_assets.py` 仍是历史生成流程，运行它们需要相应旧输入。
+字体与 `srmodels.bin` 是必需源资源，已单独放行 Git 忽略；其他生成 `.bin`
+可重建。每张背景 CBin 的像素直接从映射 Flash 读取，不在运行时解码 PNG。
+旧 idle/lowmem 包、PSRAM 一次性修复器、旧 GIF 发布脚本、64px 头像及重复
+预览已清理，所需共用函数已迁移为独立模块。旧方案可从 Git 历史追溯。
 
-`.bin` 扩展名不代表临时文件：当前 staging 的字体和 `srmodels.bin` 是
-不可缺少的源资源，已从通用忽略规则中单独放行。它们需要一同提交，
-否则新检出的工程不能重建完整素材包。设备 NVS 备份含配置数据，应留在本地。
-`staging/scene_day.bin` 和 `scene_night.bin` 是可从上述 PNG 重建的派生资源，
-与不可缺少的字体、唤醒模型源文件不同，不需要放行 Git 忽略规则。
+详见 [构建与素材流程](../docs/c5/build-and-flash.md)、
+[分支说明](../UPSTREAM.md)和[验证记录](../docs/c5/validation-and-limits.md)。

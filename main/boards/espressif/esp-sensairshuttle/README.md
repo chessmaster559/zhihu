@@ -71,19 +71,19 @@ PDM 时钟使用官方 `I2S_PDM_TX_CLK_DAC_DEFAULT_CONFIG`：24 kHz PCM 时
 识别文字显示在底部；播报文字使用头顶圆角漫画气泡，长句滚动显示。
 睡眠时叠加上浮 Zzz，有效触摸时叠加渐隐爱心；叠加层复用小控件，不新增
 GIF 或解码画布，也不会重启桌宠动作。布局预览与验证见
-[`docs/c5-pet-overlay.md`](../../../../docs/c5-pet-overlay.md)。
+[`docs/c5/desktop-pet.md`](../../../../docs/c5/desktop-pet.md)。
 
 `custom_assets/scenes/` 的两张 PNG 在打包时转换成可直接从 Flash 读取的
 RGB565 场景。看山睡眠，或本机时钟处于 19:00–次日 08:00 时显示夜景；
 08:00–19:00 且醒着显示日景。时钟未同步时只依据睡眠状态，切换不重启动作，
 也不写 NVS。新背景需要同时更新固件和素材包，预览及验证见
-[`docs/c5-pet-scenes.md`](../../../../docs/c5-pet-scenes.md)。
+[`docs/c5/desktop-pet.md`](../../../../docs/c5/desktop-pet.md)。
 
 冰屋中看山的脚对齐左侧地垫，日常状态文字隐藏；等待说话显示淡绿点，控件
 支持 VAD 驱动的加深提示，C5 本地 VAD 输入尚待实现。
 等待回复显示小灯泡。夜景对 EAF 与回退照施加约 12.5% 深蓝染色，日景恢复
 原色。当前预览、布局依据及资源说明见
-[`docs/c5-pet-refinement.md`](../../../../docs/c5-pet-refinement.md)。
+[`docs/c5/desktop-pet.md`](../../../../docs/c5/desktop-pet.md)。
 
 麦克风已启用官方 `esp_codec_dev` ADC DMA 接口：ADC1_CH5、16 kHz、
 640 字节 DMA 帧。输入任务使用 6144 字节栈，容纳官方 ADC 解析临时数组；
@@ -96,7 +96,7 @@ BMI270 任务。原配两类子板互换，选择规则见当前技术文档。
 温湿压/原始气体电阻采集，沿用 SDA2/SCL3、CS10 高、SDO9 低，地址 0x76。
 “闻一闻”入口为设备 MCP 工具 `self.pet.nose.get_status`；该版本尚无 BSEC IAQ
 和气味分类模型，不能把原始电阻当成空气质量或具体气味。接入、状态判据及
-验证说明见 [`docs/c5-bme690-nose.md`](../../../../docs/c5-bme690-nose.md)。
+验证说明见 [`docs/c5/nose-and-mcp.md`](../../../../docs/c5/nose-and-mcp.md)。
 
 编译和主机测试不能代替硬件验证；实际语音识别、动作播放、响度及 Wi-Fi
 收发噪声仍需结合本次串口日志和实机观察确认。

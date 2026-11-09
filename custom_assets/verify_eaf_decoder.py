@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 from PIL import Image
-from verify_motion_decoder import STUBS, SUPPORT
+from eaf_decoder_test_support import STUBS, SUPPORT
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -45,7 +45,7 @@ static inline void *heap_caps_aligned_alloc(size_t a,size_t n,unsigned c){(void)
         path = work / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
-    support = SUPPORT.split("API void *open_gif")[0].replace('"gifdec.h"', '"esp_eaf_dec.h"')
+    support = SUPPORT
     support += r"""
 void *malloc(size_t n){return heap_caps_malloc(n,4);}
 void *calloc(size_t n,size_t s){void *p=malloc(n*s);if(p)memset(p,0,n*s);return p;}

@@ -21,7 +21,7 @@ keywords = ('Assets:', 'LvglGif:', 'GIF:', 'LcdDisplay:', 'StateMachine:',
             'abort()', 'CORRUPT', 'failed', 'malloc', 'App version:',
             'psram', 'heap_init:', 'AdcPdmAudioCodec:', 'AudioCodec:', 'AudioService:',
             'Adev_Codec:', 'adc_data:', 'memory test', 'Pet presentation:', 'Pet motion:',
-            'Bmi270Pet:', 'StickmanPet:', 'ELF file SHA256')
+            'Bmi270Pet:', 'Bme690Nose:', 'ELF file SHA256')
 with args.output.open('wb') as log:
     try:
         while time.monotonic() < deadline:

@@ -14,7 +14,7 @@ import struct
 import tempfile
 
 from PIL import Image
-from build_idle_assets import unpack
+from asset_pack import unpack
 
 ROOT = Path(__file__).resolve().parents[1]
 FRAME_MS = 50

@@ -36,8 +36,8 @@ python scripts/build.py espressif/esp-sensairshuttle --name esp-sensairshuttle -
 仓库提交。`--pack-only` 使用仓库内的 EAF、字体、唤醒模型和两张背景 PNG，
 无需下载个人目录中的原动画压缩包。
 
-GitHub Actions 同样先安装主机测试所需 Pillow，并仅在此 C5 板型的构建任务中
-运行素材打包步骤，随后调用统一构建脚本；其他板型不执行看山素材转换。
+本分支 GitHub Actions 仅构建这一 C5 变体；先安装主机测试所需 Pillow，
+生成看山素材包后调用统一构建脚本。上游其他板卡源码不纳入本分支 CI。
 
 若修改 GIF，再执行不带 `--pack-only` 的转换命令。六组源 GIF 位于
 `custom_assets/kanshan_motion_v1/staging/pet_*.gif`；EAF 位于
@@ -45,7 +45,7 @@ GitHub Actions 同样先安装主机测试所需 Pillow，并仅在此 C5 板型
 虽然扩展名为 `.bin`，仍已作为源资源放行 Git 忽略规则。
 
 场景源文件为 `custom_assets/scenes/igloo_day_284x240.png` 与对应 night PNG。
-JPEG 备用图不进入包；脚本拒绝错误尺寸、透明背景和损坏资源。运行时使用
+未使用的 JPEG 备用图已清理；脚本拒绝错误尺寸、透明背景和损坏资源。运行时使用
 RGB565 CBin，不加载 PNG/JPEG 解码画布。
 
 ## 子板配置

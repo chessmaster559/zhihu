@@ -1,22 +1,15 @@
-# Black-and-white Liu Kanshan idle asset
+# 128px 开机与配网黑白照
 
-Generated with the built-in imagegen tool from the user's
-`Downloads/看山三视图/liukanshan-avatar.jpg`. The source reference is not modified.
+`liukanshan_bw_source.png` 是由用户参考图生成并确认的透明黑白源图，
+`liukanshan_bw_128.png` 是当前预览。固件使用
+`main/pet/kanshan_bw_128_image.cc` 内的 128×128 ARGB8888 资源，
+共 65536 B 像素，运行时不解码 PNG。旧 64px 资源和火柴人渲染器已移除。
 
-Prompt: Convert the supplied Liu Kanshan avatar to a black-and-white illustration
-on a truly transparent background. Preserve the silhouette, ears, face, black oval
-muzzle, waving arm, body proportions and painting-palette accessory. Remove the
-blue rounded backdrop and circuit traces; no text, new objects or watermark.
+在工程根目录重新编码：
 
-`liukanshan_bw_source.png` is the generated source. The current C5 build uses
-`../../main/pet/kanshan_bw_128_image.cc`, a 128x128 Flash-resident ARGB8888 descriptor
-(65,536 bytes), for boot/provisioning and animation failure fallback.
-`liukanshan_bw_128.png` is its preview. The 64px preview/descriptor belong to the
-older stickman renderer and are not compiled into the current C5 variant.
-Runtime rendering does not read these PNG files or require a PNG decoder.
-
-Regenerate the encoded resource from the project directory:
-
-```powershell
-python custom_assets/build_bw_avatar.py --source custom_assets/kanshan_bw/liukanshan_bw_source.png --output main/pet/kanshan_bw_128_image.cc --side 128 --symbol kKanshanBw128Image --preview custom_assets/kanshan_bw/liukanshan_bw_128.png
+```sh
+python custom_assets/build_bw_avatar.py --source custom_assets/kanshan_bw/liukanshan_bw_source.png --output main/pet/kanshan_bw_128_image.cc --preview custom_assets/kanshan_bw/liukanshan_bw_128.png
 ```
+
+脚本默认并限制为当前使用的 128px 规格；仅缩放/编码已确认源图，不重新生成角色。
+[素材总览](../README.md) · [桌宠与界面](../../docs/c5/desktop-pet.md)

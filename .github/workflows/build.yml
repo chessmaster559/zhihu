@@ -1,4 +1,4 @@
-name: Build Boards
+name: Build Kanshan C5
 
 on:
   push:
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   prepare:
-    name: Determine variants to build
+    name: Validate the C5 fork
     runs-on: ubuntu-latest
     container:
       image: espressif/idf:v6.1
@@ -32,38 +32,25 @@ jobs:
           python -m unittest discover -s scripts/tests -v
 
       - id: select
-        name: Select variants based on changes
+        name: Select the C5 fork variant
         shell: bash
         run: |
-          EVENT_NAME="${{ github.event_name }}"
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          import sys
 
-          # push 到 main 分支，编译全部变体
-          if [[ "$EVENT_NAME" == "push" ]]; then
-            # Keep the full matrix out of an environment variable. A single
-            # Linux environment entry is limited to 128 KiB, and the variant
-            # JSON can exceed that as boards are added.
-            {
-              printf 'variants='
-              python scripts/build.py --list-boards --json
-            } >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          # pull_request 场景
-          # actions/checkout checks out GitHub's synthetic PR merge commit. Its
-          # first and second parents are the exact base and head commits used
-          # for this run, even when the event SHAs are not exposed as refs in
-          # the job container.
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          BASE_SHA="HEAD^1"
-          HEAD_SHA="HEAD^2"
-          echo "Base: $(git rev-parse "$BASE_SHA"), Head: $(git rev-parse "$HEAD_SHA")"
-
-          CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-          echo -e "Changed files:\n$CHANGED"
-
-          SELECTED=$(printf '%s\n' "$CHANGED" | python scripts/build.py --select-changed)
-          echo "variants=$SELECTED" >> $GITHUB_OUTPUT
+          variants = json.loads(subprocess.check_output(
+              [sys.executable, "scripts/build.py", "--list-boards", "--json"], text=True))
+          selected = [item for item in variants
+                      if item["board"] == "espressif/esp-sensairshuttle"
+                      and item["name"] == "esp-sensairshuttle"]
+          if len(selected) != 1:
+              raise SystemExit("Expected exactly one SensairShuttle C5 variant")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write("variants=" + json.dumps(selected, separators=(",", ":")) + "\n")
+          PY
 
   build:
     name: Build ${{ matrix.full_name }}

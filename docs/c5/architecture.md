@@ -83,6 +83,6 @@ C5 已提供语音活动检测，详见[待办](validation-and-limits.md)。
 `build/`、`managed_components/`、`sdkconfig` 和 mmap 头是生成内容，由 SDK/脚本管理。
 发布素材包 `.bin` 可重建，不把本机全 Flash/NVS 备份当作资源输入。
 
-旧的 idle/lowmem/GIF 打包目录是历史方案；当前生效入口是
+旧的 idle/lowmem/GIF 发布方案已清理，可从 Git 历史追溯；当前生效入口是
 `custom_assets/kanshan_eaf_v1`。`kanshan_motion_v1/staging/pet_*.gif` 仍是转换源，不能
 因名称旧就删除。当前阶段没有为 PC 编写独立上位机应用。
